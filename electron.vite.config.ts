@@ -1,10 +1,11 @@
 import vue from "@vitejs/plugin-vue"
-import { defineConfig, externalizeDepsPlugin, swcPlugin } from "electron-vite"
+import { defineConfig, externalizeDepsPlugin } from "electron-vite"
 import { resolve } from "path"
+import swc from "unplugin-swc"
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin(), swc.vite()]
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
@@ -16,6 +17,6 @@ export default defineConfig({
         "@packages": resolve("src/packages")
       }
     },
-    plugins: [vue(), swcPlugin()]
+    plugins: [vue(), swc.vite()]
   }
 })
