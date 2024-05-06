@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
+  "type": "module",
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
@@ -18,15 +19,17 @@
     "@electron-toolkit/utils": "^3.0.0"
   },
   "devDependencies": {
+    "@swc/core": "^1.5.2",
     "@types/node": "^20.12.8",
     "@vitejs/plugin-vue": "^5.0.4",
-    "@swc/core": "^1.5.2",
     "electron": "^30.0.2",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.2.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
+    "unplugin-swc": "^1.4.5",
     "vite": "^5.2.11",
+    "vitest": "^1.6.0",
     "vue": "^3.4.26",
     "vue-tsc": "^1.8.27"
   }
