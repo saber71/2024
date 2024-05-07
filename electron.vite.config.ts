@@ -1,7 +1,7 @@
 import vue from "@vitejs/plugin-vue"
-import vueJsx from "@vitejs/plugin-vue-jsx";
-import {defineConfig, externalizeDepsPlugin} from "electron-vite"
-import {resolve} from "path"
+import vueJsx from "@vitejs/plugin-vue-jsx"
+import { defineConfig, externalizeDepsPlugin } from "electron-vite"
+import { resolve } from "path"
 import swc from "unplugin-swc"
 
 export default defineConfig({
@@ -18,19 +18,21 @@ export default defineConfig({
         "@packages": resolve("src/packages")
       }
     },
-    plugins: [vue(),
+    plugins: [
+      vue(),
       vueJsx({
         babelPlugins: [
           "babel-plugin-transform-typescript-metadata",
           [
             "@babel/plugin-proposal-decorators",
             {
-              version: "legacy",
-            },
+              version: "legacy"
+            }
           ],
-          ["@babel/plugin-transform-class-properties"],
-        ],
+          ["@babel/plugin-transform-class-properties"]
+        ]
       }),
-      swc.vite(),]
+      swc.vite()
+    ]
   }
 })
