@@ -18,7 +18,8 @@
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "eventemitter3": "^5.0.1",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.24.1",

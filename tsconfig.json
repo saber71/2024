@@ -2,6 +2,7 @@
   "include": [
     "electron.vite.config.*",
     "src/main/**/*",
+    "src/packages/**/*",
     "src/preload/**/*",
     "src/preload/*.d.ts",
     "src/renderer/src/env.d.ts",
