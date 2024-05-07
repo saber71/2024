@@ -19,8 +19,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
+    "strictPropertyInitialization": false,
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
