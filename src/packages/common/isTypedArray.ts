@@ -1,4 +1,4 @@
-import type { TypedArray } from "../types"
+import type { TypedArray } from "./types"
 
 export function isTypedArray(arr: any): arr is TypedArray {
   return (

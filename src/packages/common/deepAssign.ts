@@ -1,5 +1,5 @@
-import type { TypedArray } from "../types"
 import { isTypedArray } from "./isTypedArray"
+import type { TypedArray } from "./types"
 
 /* 合并两个对象，dst会被修改 */
 export function deepAssign<T extends object>(dst: any, src: T): T {

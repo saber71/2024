@@ -1,5 +1,5 @@
-import type { DeepCloneOption } from "../types"
 import { isTypedArray } from "./isTypedArray"
+import type { DeepCloneOption } from "./types"
 
 export function deepClone<T>(obj: T, options: DeepCloneOption = {}): T {
   if (typeof obj !== "object" || obj === undefined || obj === null) return obj
