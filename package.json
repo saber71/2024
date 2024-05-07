@@ -18,8 +18,7 @@
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "eventemitter3": "^5.0.1",
-    "reflect-metadata": "^0.2.2",
-    "vue-router": "^4.3.2"
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.24.1",
@@ -27,6 +26,7 @@
     "@swc/core": "^1.5.3",
     "@types/node": "^20.12.10",
     "@vitejs/plugin-vue": "^5.0.4",
+    "@vitejs/plugin-vue-jsx": "^3.1.0",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
     "electron": "^30.0.2",
     "electron-builder": "^24.13.3",
@@ -37,6 +37,7 @@
     "vite": "^5.2.11",
     "vitest": "^1.6.0",
     "vue": "^3.4.27",
+    "vue-router": "^4.3.2",
     "vue-tsc": "^2.0.16"
   }
 }
