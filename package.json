@@ -1,6 +1,6 @@
 {
   "name": "2024",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
   "type": "module",
@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
-    "@electron-toolkit/utils": "^3.0.0"
+    "@electron-toolkit/utils": "^3.0.0",
+    "eventemitter3": "^5.0.1",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@swc/core": "^1.5.2",
