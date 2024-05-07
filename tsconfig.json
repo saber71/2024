@@ -4,7 +4,6 @@
     "src/main/**/*",
     "src/packages/**/*",
     "src/preload/**/*",
-    "src/preload/*.d.ts",
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.vue"
@@ -28,6 +27,7 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
+      "@preload/*": ["src/preload/*"],
       "@packages/*": ["src/packages/*"]
     },
     "types": ["electron-vite/node", "node"]

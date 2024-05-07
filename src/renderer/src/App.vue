@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
+import { invoke } from "@renderer/exposed"
 
-const ipcHandle = () => window.electron.ipcRenderer.send('ping')
+const ipcHandle = () => invoke("ping", "123", 1)
 </script>
 
 <template>
@@ -22,5 +22,4 @@ const ipcHandle = () => window.electron.ipcRenderer.send('ping')
       <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
     </div>
   </div>
-  <Versions />
 </template>
