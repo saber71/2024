@@ -4,9 +4,9 @@
     "src/main/**/*",
     "src/packages/**/*",
     "src/preload/**/*",
-    "src/renderer/src/env.d.ts",
-    "src/renderer/src/**/*",
-    "src/renderer/src/**/*.vue"
+    "src/renderer/env.d.ts",
+    "src/renderer/**/*",
+    "src/renderer/**/*.vue"
   ],
   "compilerOptions": {
     "target": "esnext",
@@ -29,7 +29,7 @@
     "strictPropertyInitialization": false,
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["src/renderer/src/*"],
+      "@renderer/*": ["src/renderer/*"],
       "@preload/*": ["src/preload/*"],
       "@packages/*": ["src/packages/*"]
     }

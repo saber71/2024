@@ -5,7 +5,7 @@ import { resolve } from "path"
 import swc from "unplugin-swc"
 
 const alias = {
-  "@renderer": resolve("src/renderer/src"),
+  "@renderer": resolve("src/renderer"),
   "@preload": resolve("src/preload"),
   "@packages": resolve("src/packages")
 }
