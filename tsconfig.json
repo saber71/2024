@@ -11,9 +11,12 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "useDefineForClassFields": true,
     "sourceMap": false,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "strict": true,
     "jsx": "preserve",
+    "jsxImportSource": "vue",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -29,7 +32,6 @@
       "@renderer/*": ["src/renderer/src/*"],
       "@preload/*": ["src/preload/*"],
       "@packages/*": ["src/packages/*"]
-    },
-    "types": ["electron-vite/node", "node"]
+    }
   }
 }
