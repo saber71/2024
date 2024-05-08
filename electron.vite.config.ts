@@ -4,21 +4,23 @@ import { defineConfig, externalizeDepsPlugin } from "electron-vite"
 import { resolve } from "path"
 import swc from "unplugin-swc"
 
+const alias = {
+  "@renderer": resolve("src/renderer/src"),
+  "@preload": resolve("src/preload"),
+  "@packages": resolve("src/packages")
+}
+
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin(), swc.vite()]
+    plugins: [externalizeDepsPlugin(), swc.vite()],
+    resolve: { alias }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    resolve: { alias }
   },
   renderer: {
-    resolve: {
-      alias: {
-        "@renderer": resolve("src/renderer/src"),
-        "@preload": resolve("src/preload"),
-        "@packages": resolve("src/packages")
-      }
-    },
+    resolve: { alias },
     plugins: [
       vue(),
       vueJsx({
