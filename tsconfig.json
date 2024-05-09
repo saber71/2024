@@ -4,7 +4,7 @@
     "src/main/**/*",
     "src/packages/**/*",
     "src/preload/**/*",
-    "src/renderer/env.d.ts",
+    "env.d.ts",
     "src/renderer/**/*",
     "src/renderer/**/*.vue"
   ],
