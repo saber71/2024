@@ -1,5 +1,5 @@
-import { chineseNumber } from "@packages/chinese-number/index"
 import { expect, test } from "vitest"
+import { chineseNumber } from "./chineseNumber"
 
 test("chineseNumber", () => {
   expect(chineseNumber(123)).toBe("一百二十三")
