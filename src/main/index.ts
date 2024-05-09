@@ -14,7 +14,9 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
       sandbox: false
-    }
+    },
+    transparent: true,
+    frame: false
   })
 
   mainWindow.on("ready-to-show", () => {
@@ -70,5 +72,5 @@ app.on("window-all-closed", () => {
   }
 })
 
-// In this file you can include the rest of your app"s specific main process
+// In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
