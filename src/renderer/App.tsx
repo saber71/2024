@@ -20,6 +20,19 @@ export class AppInst extends VueComponent<AppProps> {
     invoke("ping", "123", 1)
   }
 
+  @BindThis()
+  async handleShowSaveDialog() {
+    const result = await invoke("showSaveDialog", {
+      filters: [
+        {
+          extensions: ["png"],
+          name: "image"
+        }
+      ]
+    })
+    console.log(result)
+  }
+
   render(): VNodeChild {
     return (
       <div>
@@ -45,6 +58,7 @@ export class AppInst extends VueComponent<AppProps> {
               Send IPC
             </a>
           </div>
+          <button onClick={this.handleShowSaveDialog}>show save dialog</button>
         </div>
       </div>
     )
