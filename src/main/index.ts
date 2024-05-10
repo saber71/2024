@@ -2,6 +2,7 @@ import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, ipcMain, shell } from "electron"
 import { join } from "path"
 import icon from "../../resources/icon.png"
+import { IpcHandler } from "@packages/ipc-handler"
 
 function createWindow(): void {
   // Create the browser window.
@@ -51,8 +52,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.handle("ping", (_, arg1, arg2) => console.log(arg1, arg2))
+  IpcHandler.install()
 
   createWindow()
 

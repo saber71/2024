@@ -1,9 +1,14 @@
 import type { electronAPI } from "@electron-toolkit/preload"
+import type { SaveDialogOptions } from "electron"
 
-interface InvokeChannelMap {
+export interface InvokeChannelMap {
   ping: {
     args: ["123", 1]
     return: void
+  }
+  showSaveDialog: {
+    args: [SaveDialogOptions]
+    return: string
   }
 }
 
