@@ -2,13 +2,15 @@ import { filter, type FilterCondition, type FilterItem } from "@packages/filter"
 import Keyv from "keyv"
 import KeyvFile from "keyv-file"
 import { v4 } from "uuid"
+import { join } from "path"
+import { app } from "electron"
 
 export class Collection<V extends FilterItem> {
   constructor(readonly namespace: string) {
     this._keyValue = new Keyv({
       namespace,
       store: new KeyvFile({
-        filename: `./${namespace}.json`
+        filename: join(app.getPath("userData"), namespace + ".json")
       })
     })
   }
