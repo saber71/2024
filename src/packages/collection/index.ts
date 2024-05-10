@@ -4,6 +4,7 @@ import KeyvFile from "keyv-file"
 import { v4 } from "uuid"
 import { join } from "path"
 import { app } from "electron"
+import { deepAssign } from "@packages/common"
 
 export class Collection<V extends FilterItem> {
   constructor(readonly namespace: string) {
@@ -16,6 +17,15 @@ export class Collection<V extends FilterItem> {
   }
 
   private readonly _keyValue: Keyv
+
+  async update(...items: Array<Partial<V> & { _id: string }>) {
+    for (let item of items) {
+      const oldData = await this._keyValue.get(item._id)
+      if (!oldData) throw new Error("Not found item in collection by id " + item._id)
+      deepAssign(oldData, item)
+      await this._keyValue.set(item._id, oldData)
+    }
+  }
 
   async save(...items: Array<Omit<V, "_id"> & { _id?: string }>) {
     for (let item of items) {
