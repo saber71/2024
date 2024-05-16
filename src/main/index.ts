@@ -1,24 +1,30 @@
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
-import { app, BrowserWindow, ipcMain, shell } from "electron"
+import { app, BrowserWindow, shell, type BrowserWindowConstructorOptions } from "electron"
 import { join } from "path"
 import icon from "../../resources/icon.png"
 import { IpcHandler } from "@packages/ipc-handler"
+import { deepAssign } from "@packages/common"
 
-function createWindow(): void {
+function createWindow(options: BrowserWindowConstructorOptions = {}): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, "../preload/index.mjs"),
-      sandbox: false
-    },
-    transparent: true,
-    frame: false
-  })
+  const mainWindow = new BrowserWindow(
+    deepAssign(
+      {
+        width: 900,
+        height: 670,
+        show: false,
+        autoHideMenuBar: true,
+        ...(process.platform === "linux" ? { icon } : {}),
+        webPreferences: {
+          preload: join(__dirname, "../preload/index.mjs"),
+          sandbox: false
+        },
+        transparent: true,
+        frame: false
+      },
+      options
+    )
+  )
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show()

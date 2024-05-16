@@ -28,25 +28,25 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.24.1",
     "@babel/plugin-transform-class-properties": "^7.24.1",
-    "@swc/core": "^1.5.5",
+    "@swc/core": "^1.5.7",
     "@types/deep-equal": "^1.0.4",
     "@types/md5": "^2.3.5",
-    "@types/node": "^20.12.11",
+    "@types/node": "^20.12.12",
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
-    "electron": "^30.0.3",
+    "electron": "^30.0.6",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.2.0",
     "prettier": "^3.2.5",
-    "sass": "^1.77.0",
+    "sass": "^1.77.1",
     "typescript": "^5.4.5",
     "unplugin-swc": "^1.4.5",
     "vite": "^5.2.11",
     "vitest": "^1.6.0",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2",
-    "vue-tsc": "^2.0.16"
+    "vue-tsc": "^2.0.18"
   }
 }
