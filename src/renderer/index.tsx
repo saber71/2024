@@ -10,11 +10,11 @@ import { invoke } from "@renderer/exposed"
 import type { VNodeChild } from "vue"
 import electronSvg from "./assets/electron.svg"
 
-export interface AppProps extends VueComponentBaseProps {}
+export interface IndexProps extends VueComponentBaseProps {}
 
 @Component()
-export class AppInst extends VueComponent<AppProps> {
-  static readonly defineProps: ComponentProps<AppProps> = ["inst"]
+export class IndexInst extends VueComponent<IndexProps> {
+  static readonly defineProps: ComponentProps<IndexProps> = ["inst"]
 
   @BindThis() handlePing() {
     invoke("ping", "123", 1)
@@ -65,4 +65,4 @@ export class AppInst extends VueComponent<AppProps> {
   }
 }
 
-export default toNative<AppProps>(AppInst)
+export default toNative<IndexProps>(IndexInst)
