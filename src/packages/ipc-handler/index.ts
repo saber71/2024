@@ -1,39 +1,33 @@
 import type { InvokeChannelMap } from "@packages/exposed"
-import { ipcMain, type IpcMainInvokeEvent } from "electron"
+import { ipcMain } from "electron"
 import { dialog } from "electron"
 import { getDecoratedName } from "@packages/dependency-injection"
+import type { Class } from "@packages/common"
 
-type IpcHandlerInterface = {
-  [Key in keyof InvokeChannelMap]: (
-    e: IpcMainInvokeEvent,
-    ...args: InvokeChannelMap[Key]["args"]
-  ) => InvokeChannelMap[Key]["return"] | Promise<InvokeChannelMap[Key]["return"]>
-}
+const channels: Array<{ methodName: string; clazz: Class }> = []
 
-const channels: Array<string> = []
-
-function Handler() {
+export function Handler(channelName?: keyof InvokeChannelMap) {
   return (target: any, name: any) => {
-    name = getDecoratedName(name)
-    channels.push(name)
+    name = channelName ?? getDecoratedName(name)
+    channels.push({ clazz: target.constructor, methodName: name })
   }
 }
 
-export class IpcHandler implements IpcHandlerInterface {
+export class IpcHandler {
   static install() {
-    const instance = new IpcHandler()
+    const instanceMap = new Map()
     for (let item of channels) {
-      ipcMain.handle(item, (instance as any)[item].bind(instance))
+      let instance = instanceMap.get(item.clazz)
+      if (!instance) instanceMap.set(item.clazz, (instance = new item.clazz()))
+      ipcMain.handle(item.methodName, (e, ...args) => (instance as any)[item.methodName](...args, e))
     }
   }
 
-  @Handler() ping(e: IpcMainInvokeEvent, ...args: InvokeChannelMap["ping"]["args"]) {
+  @Handler() ping(...args: InvokeChannelMap["ping"]["args"]) {
     console.log(...args)
   }
 
-  @Handler()
-  async showSaveDialog(
-    e: IpcMainInvokeEvent,
+  @Handler() async showSaveDialog(
     ...args: InvokeChannelMap["showSaveDialog"]["args"]
   ): Promise<InvokeChannelMap["showSaveDialog"]["return"]> {
     const option = args[0]

@@ -12,7 +12,8 @@
     "build:unpack": "electron-builder --dir",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:linux": "electron-builder --linux",
+    "node": "node --loader ts-node/esm --experimental-specifier-resolution=node 1.ts --tsconfig tsconfig.json"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
@@ -41,6 +42,7 @@
     "electron-vite": "^2.2.0",
     "prettier": "^3.2.5",
     "sass": "^1.77.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "unplugin-swc": "^1.4.5",
     "vite": "^5.2.11",
