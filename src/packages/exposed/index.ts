@@ -14,6 +14,26 @@ export interface InvokeChannelMap {
     args: []
     return: void
   }
+  "window:maximize": {
+    args: []
+    return: void
+  }
+  "window:isMaximize": {
+    args: []
+    return: boolean
+  }
+  "window:unmaximize": {
+    args: []
+    return: void
+  }
+  "window:minimize": {
+    args: []
+    return: void
+  }
+  "window:close": {
+    args: []
+    return: void
+  }
 }
 
 interface Api {

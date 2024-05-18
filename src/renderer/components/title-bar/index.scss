@@ -1,0 +1,60 @@
+.title-bar {
+  position: relative;
+  height: 40px;
+  background: black;
+  color: white;
+
+  .title {
+    height: 100%;
+    position: absolute;
+    left: 10px;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 16px;
+      height: 16px;
+    }
+
+    span {
+      font-size: 14px;
+      margin-left: 10px;
+      user-select: none;
+      cursor: default;
+    }
+  }
+
+  .center {
+    height: 100%;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+  }
+
+  .buttons {
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    div {
+      cursor: pointer;
+      width: 40px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      img {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}

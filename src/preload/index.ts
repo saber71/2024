@@ -14,14 +14,14 @@ export const api: Exposed["api"] = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld("electronAPI", electronAPI)
+    contextBridge.exposeInMainWorld("electronApi", electronAPI)
     contextBridge.exposeInMainWorld("api", api)
   } catch (error) {
     console.error(error)
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electronAPI = electronAPI
+  window.electronApi = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
 }

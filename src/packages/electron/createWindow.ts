@@ -6,12 +6,13 @@ import icon from "../../../resources/icon.png"
 
 export interface CreateWindowOptions extends BrowserWindowConstructorOptions {
   html: "index" | "photo"
+  maximize?: boolean
 }
 
 export function createWindow(options: CreateWindowOptions) {
   return new Promise<BrowserWindow>((resolve) => {
     // Create the browser window.
-    const mainWindow = new BrowserWindow(
+    const window = new BrowserWindow(
       deepAssign(
         {
           width: 900,
@@ -28,12 +29,22 @@ export function createWindow(options: CreateWindowOptions) {
       )
     )
 
-    mainWindow.on("ready-to-show", () => {
-      mainWindow.show()
-      resolve(mainWindow)
+    window.webContents.once("did-finish-load", () => window.webContents.send("sendWindowId", window.id))
+
+    window.on("maximize", () => window.webContents.send("isMaximized", window.isMaximized()))
+    window.on("unmaximize", () => window.webContents.send("isMaximized", window.isMaximized()))
+    window.on("show", () => window.webContents.send("isShow", true))
+    window.on("hide", () => window.webContents.send("isShow", false))
+    window.on("focus", () => window.webContents.send("isFocus", true))
+    window.on("blur", () => window.webContents.send("isFocus", false))
+
+    window.on("ready-to-show", () => {
+      if (options.maximize) window.maximize()
+      else window.show()
+      resolve(window)
     })
 
-    mainWindow.webContents.setWindowOpenHandler((details) => {
+    window.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url)
       return { action: "deny" }
     })
@@ -41,9 +52,9 @@ export function createWindow(options: CreateWindowOptions) {
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + ("/" + options.html).repeat(2))
+      window.loadURL(process.env["ELECTRON_RENDERER_URL"] + ("/" + options.html).repeat(2))
     } else {
-      mainWindow.loadFile(join(__dirname, `../renderer/${options.html}/${options.html}.html`))
+      window.loadFile(join(__dirname, `../renderer/${options.html}/${options.html}.html`))
     }
   })
 }

@@ -21,6 +21,14 @@ export default defineConfig({
   },
   renderer: {
     resolve: { alias },
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, "src/renderer/index/index.html"),
+          photo: resolve(__dirname, "src/renderer/photo/photo.html")
+        }
+      }
+    },
     plugins: [
       vue(),
       vueJsx({
