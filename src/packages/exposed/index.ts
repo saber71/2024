@@ -10,6 +10,10 @@ export interface InvokeChannelMap {
     args: [SaveDialogOptions]
     return: string
   }
+  openPhoto: {
+    args: []
+    return: void
+  }
 }
 
 interface Api {

@@ -5,7 +5,7 @@ import { join } from "path"
 import icon from "../../../resources/icon.png"
 
 export interface CreateWindowOptions extends BrowserWindowConstructorOptions {
-  html: "index"
+  html: "index" | "photo"
 }
 
 export function createWindow(options: CreateWindowOptions) {
@@ -41,9 +41,9 @@ export function createWindow(options: CreateWindowOptions) {
     // HMR for renderer base on electron-vite cli.
     // Load the remote URL for development or the local html file for production.
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + "/" + options.html)
+      mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + ("/" + options.html).repeat(2))
     } else {
-      mainWindow.loadFile(join(__dirname, `../renderer/${options.html}.html`))
+      mainWindow.loadFile(join(__dirname, `../renderer/${options.html}/${options.html}.html`))
     }
   })
 }
