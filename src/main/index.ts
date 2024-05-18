@@ -19,7 +19,9 @@ app.whenReady().then(() => {
 
   IpcHandler.install()
 
-  createWindow({ html: "index" })
+  createWindow({ html: "index" }).then((window) => {
+    window.on("closed", () => app.exit())
+  })
 
   app.on("activate", function () {
     // On macOS, it's common to re-create a window in the app when the
