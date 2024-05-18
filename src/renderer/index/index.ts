@@ -1,4 +1,4 @@
-import "../assets/main.css"
+import "./index.css"
 import { VueClass } from "@packages/vue-class"
 import { createApp } from "vue"
 import Index from "./index.tsx"

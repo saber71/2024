@@ -1,8 +1,8 @@
-import type { InvokeChannelMap } from "@packages/exposed"
-import { ipcMain } from "electron"
-import { dialog } from "electron"
-import { getDecoratedName } from "@packages/dependency-injection"
 import type { Class } from "@packages/common"
+import { getDecoratedName } from "@packages/dependency-injection"
+import { createWindow } from "@packages/electron"
+import type { InvokeChannelMap } from "@packages/exposed"
+import { dialog, ipcMain } from "electron"
 
 const channels: Array<{ methodName: string; clazz: Class }> = []
 
@@ -33,5 +33,9 @@ export class IpcHandler {
     const option = args[0]
     const result = await dialog.showSaveDialog(option)
     return result.filePath
+  }
+
+  @Handler() openPhoto() {
+    createWindow({ html: "photo", frame: false })
   }
 }

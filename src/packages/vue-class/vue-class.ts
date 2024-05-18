@@ -23,10 +23,12 @@ export class VueClass {
     return inject(customContainerLabel, this.dependencyInjection) || this.dependencyInjection
   }
 
-  static async install(app: App, router: Router) {
+  static async install(app: App, router?: Router) {
     this.dependencyInjection.load({ moduleName: ModuleName })
-    this.dependencyInjection.bindValue(ROUTER, router)
     VueDirective.install(app)
-    VueRouterGuard.install(router)
+    if (router) {
+      this.dependencyInjection.bindValue(ROUTER, router)
+      VueRouterGuard.install(router)
+    }
   }
 }
