@@ -1,10 +1,18 @@
+import type { IpcRendererListener } from "@electron-toolkit/preload"
 import type { Exposed } from "@packages/exposed"
 import { ref, type Ref, type UnwrapRef } from "vue"
 
 export const exposed: Exposed = window as any
 
+const electronApi = exposed.electronApi ?? {
+  ipcRenderer: {
+    on(channel: string, listener: IpcRendererListener) {},
+    once(channel: string, listener: IpcRendererListener) {}
+  }
+}
+
 const receiveWindowIdPromise = new Promise<number>((resolve) => {
-  exposed.electronApi.ipcRenderer.once("sendWindowId", (_, id: number) => resolve(id))
+  electronApi.ipcRenderer.once("sendWindowId", (_, id: number) => resolve(id))
 })
 
 export const api = exposed.api ?? {
@@ -17,7 +25,7 @@ export const invoke: Exposed["api"]["invoke"] = async (...args: any[]) => {
 
 function hook<Value>(eventName: string, initValue: Value): Ref<UnwrapRef<Value>> {
   const result = ref(initValue)
-  exposed.electronApi.ipcRenderer.on(eventName, (_, value) => (result.value = value))
+  electronApi.ipcRenderer.on(eventName, (_, value) => (result.value = value))
   return result
 }
 

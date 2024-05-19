@@ -41,16 +41,20 @@
     top: 0;
     display: flex;
     align-items: center;
+
     div {
-      cursor: pointer;
+      cursor: default;
       width: 40px;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background-color 0.1s;
+
       &:hover {
         background: rgba(255, 255, 255, 0.3);
       }
+
       img {
         width: 16px;
         height: 16px;

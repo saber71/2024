@@ -1,4 +1,12 @@
-import { Component, type ComponentProps, toNative, VueComponent, type VueComponentBaseProps } from "@packages/vue-class"
+import { Styles } from "@packages/style"
+import {
+  Component,
+  type ComponentProps,
+  Disposable,
+  toNative,
+  VueComponent,
+  type VueComponentBaseProps
+} from "@packages/vue-class"
 import Flex from "@renderer/components/flex"
 import TitleBar from "@renderer/components/title-bar"
 import Menu from "@renderer/photo/menu"
@@ -12,13 +20,38 @@ export interface PhotoProps extends VueComponentBaseProps {}
 export class PhotoInst extends VueComponent<PhotoProps> {
   static readonly defineProps: ComponentProps<PhotoProps> = ["inst"]
 
+  @Disposable() style = new Styles<"photo-container" | "photo-container_layout" | "photo-main" | "photo-main_wrap">()
+    .add("photo-container", {
+      height: "100%",
+      background: "#222222"
+    })
+    .add("photo-container_layout", {
+      height: "calc(100% - 40px)"
+    })
+    .add("photo-main", {
+      height: "100%",
+      "flex-grow": "1",
+      padding: "5px",
+      "box-sizing": "border-box"
+    })
+    .add("photo-main_wrap", {
+      background: "rgba(255,255,255,0.75)",
+      height: "100%",
+      "border-radius": "15px",
+      overflow: "hidden"
+    })
+
   render(): VNodeChild {
     return (
-      <div>
+      <div class={this.style.classNames["photo-container"]}>
         <TitleBar icon={icon} title={"照片"} />
-        <Flex>
-          <Menu style={{ flexShrink: 0 }} />
-          <RouterView />
+        <Flex class={this.style.classNames["photo-container_layout"]}>
+          <Menu />
+          <div class={this.style.classNames["photo-main"]}>
+            <div class={this.style.classNames["photo-main_wrap"]}>
+              <RouterView />
+            </div>
+          </div>
         </Flex>
       </div>
     )
