@@ -47,6 +47,10 @@ export class VueComponent<
     return this.vueInstance.props as Props
   }
 
+  get slot() {
+    return this.vueInstance.slots ?? {}
+  }
+
   get router(): Router {
     return VueClass.getContainer().getValue(ROUTER)
   }
