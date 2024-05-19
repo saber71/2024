@@ -39,7 +39,7 @@ export class TitleBarInst extends VueComponent<TitleBarProps> {
   render(): VNodeChild {
     return (
       <div class={"title-bar draggable"}>
-        <div class={"title not-draggable"}>
+        <div class={"title"}>
           <img src={this.props.icon} />
           <span>{this.props.title}</span>
         </div>

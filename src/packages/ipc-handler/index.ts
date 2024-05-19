@@ -34,11 +34,6 @@ export class IpcHandler {
     BrowserWindow.fromId(id)?.maximize()
   }
 
-  @Handler("window:isMaximize") windowIsMaximize(id: number) {
-    console.log("isMaximize", id)
-    return BrowserWindow.fromId(id)?.isMaximized()
-  }
-
   @Handler("window:unmaximize") windowUnmaximize(id: number) {
     BrowserWindow.fromId(id)?.unmaximize()
   }

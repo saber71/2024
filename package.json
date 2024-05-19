@@ -37,6 +37,7 @@
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "ant-design-vue": "^4.2.1",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
     "electron": "^30.0.6",
     "electron-builder": "^24.13.3",

@@ -18,10 +18,6 @@ export interface InvokeChannelMap {
     args: []
     return: void
   }
-  "window:isMaximize": {
-    args: []
-    return: boolean
-  }
   "window:unmaximize": {
     args: []
     return: void
