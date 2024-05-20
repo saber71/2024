@@ -1,7 +1,13 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
-import { createWindow } from "@packages/electron"
+import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
+import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
+import { createThumbnail, createWindow } from "@packages/electron"
 import { IpcHandler } from "@packages/ipc-handler"
 import { app, BrowserWindow } from "electron"
+import ffmpeg from "fluent-ffmpeg"
+
+ffmpeg.setFfmpegPath(FfmpegPath)
+ffmpeg.setFfprobePath(FfprobePath)
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -38,3 +44,7 @@ app.on("window-all-closed", () => {
     app.quit()
   }
 })
+
+console.log(
+  await createThumbnail("D:\\BaiduNetdiskDownload\\xvideos\\xvideos.com_ed43fee71f4c797a267f21f4498f8a0f-1.mp4")
+)
