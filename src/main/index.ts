@@ -1,10 +1,11 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
-import { createThumbnail, createWindow } from "@packages/electron"
+import { createWindow } from "@packages/electron"
 import { IpcHandler } from "@packages/ipc-handler"
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, net, protocol } from "electron"
 import ffmpeg from "fluent-ffmpeg"
+import * as url from "node:url"
 
 ffmpeg.setFfmpegPath(FfmpegPath)
 ffmpeg.setFfprobePath(FfprobePath)
@@ -15,6 +16,11 @@ ffmpeg.setFfprobePath(FfprobePath)
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
+
+  protocol.handle("atom", (request) => {
+    const filePath = request.url.slice("atom://".length)
+    return net.fetch(url.pathToFileURL(filePath[0] + ":" + filePath.substring(1)).toString())
+  })
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -44,7 +50,3 @@ app.on("window-all-closed", () => {
     app.quit()
   }
 })
-
-console.log(
-  await createThumbnail("D:\\BaiduNetdiskDownload\\xvideos\\xvideos.com_ed43fee71f4c797a267f21f4498f8a0f-1.mp4")
-)
