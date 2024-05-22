@@ -1,7 +1,8 @@
 import type { electronAPI } from "@electron-toolkit/preload"
+import type { PhotoInvokeChannelMap } from "@packages/ipc-handler/photo.ts"
 import type { SaveDialogOptions } from "electron"
 
-export interface InvokeChannelMap {
+export interface InvokeChannelMap extends PhotoInvokeChannelMap {
   ping: {
     args: ["123", 1]
     return: void
@@ -9,10 +10,6 @@ export interface InvokeChannelMap {
   showSaveDialog: {
     args: [SaveDialogOptions]
     return: string
-  }
-  openPhoto: {
-    args: []
-    return: void
   }
   "window:maximize": {
     args: []

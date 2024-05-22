@@ -1,7 +1,7 @@
-import { createWindow } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { BrowserWindow, dialog, ipcMain } from "electron"
 import { channels, Handler } from "./handler.ts"
+import "./photo.ts"
 
 export class IpcHandler {
   static install() {
@@ -24,10 +24,6 @@ export class IpcHandler {
     const option = args[0]
     const result = await dialog.showSaveDialog(option)
     return result.filePath
-  }
-
-  @Handler() openPhoto() {
-    createWindow({ html: "photo", frame: false, maximize: true })
   }
 
   @Handler("window:maximize") windowMaximize(id: number) {

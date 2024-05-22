@@ -1,10 +1,10 @@
+import { deepAssign } from "@packages/common"
 import { filter, type FilterCondition, type FilterItem } from "@packages/filter"
+import { app } from "electron"
 import Keyv from "keyv"
 import { KeyvFile } from "keyv-file"
-import { v4 } from "uuid"
 import { join } from "path"
-import { app } from "electron"
-import { deepAssign } from "@packages/common"
+import { v4 } from "uuid"
 
 export class Collection<V extends FilterItem = FilterItem> {
   constructor(readonly namespace: string) {
@@ -27,16 +27,16 @@ export class Collection<V extends FilterItem = FilterItem> {
     }
   }
 
-  async save(...items: Array<Omit<V, "_id"> & { _id?: string }>) {
+  async save<Item extends V = V>(...items: Array<Omit<Item, "_id"> & { _id?: string }>) {
     for (let item of items) {
       if (!item._id) item._id = v4()
       await this._keyValue.set(item._id, item)
     }
-    return items as V[]
+    return items as Item[]
   }
 
-  getById(id: string) {
-    return this._keyValue.get(id) as Promise<V | undefined>
+  getById<Item extends V = V>(id: string) {
+    return this._keyValue.get(id) as Promise<Item | undefined>
   }
 
   async search(condition?: FilterCondition<V>) {

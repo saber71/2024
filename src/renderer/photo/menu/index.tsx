@@ -6,6 +6,7 @@ import {
   PictureOutlined,
   StarOutlined
 } from "@ant-design/icons-vue"
+import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
   Component,
@@ -15,12 +16,9 @@ import {
   VueComponent,
   type VueComponentBaseProps
 } from "@packages/vue-class"
+import { invoke } from "@renderer/exposed.ts"
 import type { VNodeChild } from "vue"
 import "./index.scss"
-
-interface Directory {
-  name: string
-}
 
 export interface MenuProps extends VueComponentBaseProps {}
 
@@ -31,14 +29,11 @@ export class MenuInst extends VueComponent<MenuProps> {
   @Mut() isExpand = true
   @Mut() selectedItem = 0
   @Mut() expandDirectory = false
-  @Mut() directories: Array<Directory> = [
-    {
-      name: "Pictures"
-    },
-    {
-      name: "OneDrive图片"
-    }
-  ]
+  @Mut() directories: Array<Directory> = []
+
+  setup() {
+    invoke("photo:allDirectories").then((res) => (this.directories = res))
+  }
 
   @BindThis() handleClickDirectory() {
     this.selectedItem = 2

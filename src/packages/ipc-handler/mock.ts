@@ -21,7 +21,7 @@ export class MockIpcHandler {
     console.log("ping", args)
   }
 
-  @MockHandler("openPhoto") openPhoto() {
+  @MockHandler("photo:open") openPhoto() {
     window.open("/photo/photo.html")
   }
 }
