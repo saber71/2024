@@ -9,9 +9,14 @@ export interface CreateWindowOptions extends BrowserWindowConstructorOptions {
   maximize?: boolean
 }
 
+/**
+ * 创建一个新的BrowserWindow，并根据提供的选项进行配置。
+ * @param options 创建窗口的配置选项，继承自BrowserWindowConstructorOptions并包括html和maximize选项。
+ * @returns 返回一个Promise，该Promise在窗口准备显示时解析为创建的BrowserWindow实例。
+ */
 export function createWindow(options: CreateWindowOptions) {
   return new Promise<BrowserWindow>((resolve) => {
-    // Create the browser window.
+    // 配置基础的浏览器窗口选项，并根据平台和提供的选项进行深度合并。
     const window = new BrowserWindow(
       deepAssign(
         {
@@ -29,28 +34,35 @@ export function createWindow(options: CreateWindowOptions) {
       )
     )
 
+    // 当页面加载完成时，向渲染进程发送窗口ID。
     window.webContents.once("did-finish-load", () => window.webContents.send("sendWindowId", window.id))
 
+    // 监听窗口的最大化和取消最大化事件，向渲染进程发送当前状态。
     window.on("maximize", () => window.webContents.send("isMaximized", window.isMaximized()))
     window.on("unmaximize", () => window.webContents.send("isMaximized", window.isMaximized()))
+
+    // 监听窗口的显示和隐藏事件，向渲染进程发送当前状态。
     window.on("show", () => window.webContents.send("isShow", true))
     window.on("hide", () => window.webContents.send("isShow", false))
+
+    // 监听窗口的聚焦和失焦事件，向渲染进程发送当前状态。
     window.on("focus", () => window.webContents.send("isFocus", true))
     window.on("blur", () => window.webContents.send("isFocus", false))
 
+    // 当窗口准备好显示时，根据选项决定是最大化窗口还是直接显示，并解决Promise。
     window.on("ready-to-show", () => {
       if (options.maximize) window.maximize()
       else window.show()
       resolve(window)
     })
 
+    // 设置窗口打开处理器，用于处理外部链接的打开。
     window.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url)
       return { action: "deny" }
     })
 
-    // HMR for renderer base on electron-vite cli.
-    // Load the remote URL for development or the local html file for production.
+    // 热模块替换(HMR)相关配置，根据环境加载远程URL或本地HTML文件。
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
       window.loadURL(process.env["ELECTRON_RENDERER_URL"] + ("/" + options.html).repeat(2))
     } else {
