@@ -48,7 +48,7 @@ function hook<Channel extends keyof SendChannelMap, Value extends SendChannelMap
   initValue: Value[0]
 ): Ref<UnwrapRef<Value[0]>> {
   const result = ref(initValue)
-  listenIpcRenderer(eventName, (value: any) => (result.value = value))
+  listenIpcRenderer(eventName, ((value: any) => (result.value = value)) as any)
   return result
 }
 

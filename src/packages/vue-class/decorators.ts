@@ -1,3 +1,4 @@
+import type { SendChannelMap } from "@packages/exposed"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
@@ -100,6 +101,14 @@ export function Disposable(methodName?: string) {
   return (target: object, arg: any) => {
     const metadata = getOrCreateMetadata(target, arg)
     metadata.disposables.push({ propName: getName(arg), methodName })
+  }
+}
+
+// 适用于方法
+export function IpcListener(channel: keyof SendChannelMap) {
+  return (target: object, arg: any) => {
+    const metadata = getOrCreateMetadata(target, arg)
+    metadata.ipcListener.push({ methodName: getName(arg), channel })
   }
 }
 

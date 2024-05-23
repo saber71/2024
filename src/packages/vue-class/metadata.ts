@@ -1,3 +1,5 @@
+import type { SendChannelMap } from "@packages/exposed"
+import { listenIpcRenderer } from "@renderer/exposed.ts"
 import {
   computed,
   inject,
@@ -60,6 +62,8 @@ export class VueClassMetadata {
 
   readonly readonlys: { propName: string; shallow?: boolean }[] = []
 
+  readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
+
   readonly links: {
     refName?: string
     propName: string
@@ -106,6 +110,13 @@ export class VueClassMetadata {
     for (let methodName of this.bindThis) {
       const method = (instance as any)[methodName]
       ;(instance as any)[methodName] = method.bind(instance)
+    }
+  }
+
+  handleIpcListener(instance: object) {
+    for (let item of this.ipcListener) {
+      const method = (instance as any)[item.methodName].bind(instance)
+      ;(instance as any)["$off_" + item.methodName] = listenIpcRenderer(item.channel, method)
     }
   }
 
@@ -311,6 +322,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleComputer(instance)
   metadata.handleWatchers(instance)
   metadata.handleBindThis(instance)
+  metadata.handleIpcListener(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)

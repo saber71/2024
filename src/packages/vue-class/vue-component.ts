@@ -96,6 +96,9 @@ export function toNative<Props extends VueComponentBaseProps, Emit extends Emits
           if (typeof disposable === "function") disposable()
           else disposable?.[methodName ?? "dispose"]?.()
         }
+        metadata.ipcListener.forEach((item) => {
+          ;(instance as any)["$off_" + item.methodName]?.()
+        })
       })
 
       onUnmounted(instance.onUnmounted.bind(instance))
