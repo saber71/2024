@@ -1,7 +1,8 @@
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
-import { resolve } from "node:path"
+import { extname, resolve } from "node:path"
 import { promisify } from "node:util"
+import { createThumbnail } from "./createThumbnail"
 
 // 将image-size库的同步方法转换为异步Promise形式
 const sizeOf = promisify(imageSize)
@@ -12,6 +13,8 @@ const sizeOf = promisify(imageSize)
 export interface ImageInfo extends Stats {
   width: number
   height: number
+  path: string
+  filePath: string
 }
 
 /**
@@ -33,6 +36,14 @@ export async function getImageInfo(path: string) {
   const result: ImageInfo = stats as any
   result.width = size.width
   result.height = size.height
+  result.path = "atom://" + absolutePath
+  result.filePath = absolutePath
+
+  const extName = extname(absolutePath).toLowerCase()
+  if (extName === "mp4") {
+    const thumbnailPath = await createThumbnail(absolutePath)
+    result.path = "atom://" + thumbnailPath
+  }
 
   return result
 }

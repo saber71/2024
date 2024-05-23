@@ -1,5 +1,6 @@
 import { is } from "@electron-toolkit/utils"
 import { deepAssign } from "@packages/common"
+import { sendToWeb } from "@packages/electron/sendToWeb.ts"
 import { BrowserWindow, type BrowserWindowConstructorOptions, shell } from "electron"
 import { join } from "path"
 import icon from "../../../resources/icon.png"
@@ -35,19 +36,19 @@ export function createWindow(options: CreateWindowOptions) {
     )
 
     // 当页面加载完成时，向渲染进程发送窗口ID。
-    window.webContents.once("did-finish-load", () => window.webContents.send("sendWindowId", window.id))
+    window.webContents.once("did-finish-load", () => sendToWeb(window, "sendWindowId", window.id))
 
     // 监听窗口的最大化和取消最大化事件，向渲染进程发送当前状态。
-    window.on("maximize", () => window.webContents.send("isMaximized", window.isMaximized()))
-    window.on("unmaximize", () => window.webContents.send("isMaximized", window.isMaximized()))
+    window.on("maximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
+    window.on("unmaximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
 
     // 监听窗口的显示和隐藏事件，向渲染进程发送当前状态。
-    window.on("show", () => window.webContents.send("isShow", true))
-    window.on("hide", () => window.webContents.send("isShow", false))
+    window.on("show", () => sendToWeb(window, "window:isShow", true))
+    window.on("hide", () => sendToWeb(window, "window:isShow", false))
 
     // 监听窗口的聚焦和失焦事件，向渲染进程发送当前状态。
-    window.on("focus", () => window.webContents.send("isFocus", true))
-    window.on("blur", () => window.webContents.send("isFocus", false))
+    window.on("focus", () => sendToWeb(window, "window:isFocus", true))
+    window.on("blur", () => sendToWeb(window, "window:isFocus", false))
 
     // 当窗口准备好显示时，根据选项决定是最大化窗口还是直接显示，并解决Promise。
     window.on("ready-to-show", () => {

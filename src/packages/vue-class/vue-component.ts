@@ -92,7 +92,9 @@ export function toNative<Props extends VueComponentBaseProps, Emit extends Emits
 
       onBeforeUnmount(() => {
         for (let { propName, methodName } of metadata.disposables) {
-          ;(instance as any)[propName]?.[methodName ?? "dispose"]?.()
+          const disposable = (instance as any)[propName]
+          if (typeof disposable === "function") disposable()
+          else disposable?.[methodName ?? "dispose"]?.()
         }
       })
 

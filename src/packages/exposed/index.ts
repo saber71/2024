@@ -1,6 +1,13 @@
 import type { electronAPI } from "@electron-toolkit/preload"
-import type { PhotoInvokeChannelMap } from "@packages/ipc-handler/photo.ts"
+import type { PhotoInvokeChannelMap, PhotoSendChannelMap } from "@packages/ipc-handler/photo.ts"
 import type { SaveDialogOptions } from "electron"
+
+export interface SendChannelMap extends PhotoSendChannelMap {
+  sendWindowId: [number]
+  "window:isMaximized": [boolean]
+  "window:isShow": [boolean]
+  "window:isFocus": [boolean]
+}
 
 export interface InvokeChannelMap extends PhotoInvokeChannelMap {
   ping: {
