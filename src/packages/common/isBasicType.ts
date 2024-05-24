@@ -27,7 +27,7 @@ const basicTypes = new Set([
 ])
 
 /* 判断给定的类是否是js的内置类型 */
-function isBasicType(type: Class): boolean {
+export function isBasicType(type: Class): boolean {
   // 确保传入的是一个函数类型
   if (typeof type !== "function") {
     throw new TypeError("Expected a function type")
