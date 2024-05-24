@@ -1,7 +1,7 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { ImageInfo } from "@packages/electron"
 import type { Directory } from "@packages/ipc-handler/photo.ts"
-import { Mut, Service, VueService, Watcher } from "@packages/vue-class"
+import { Invoke, Mut, Service, VueService, Watcher } from "@packages/vue-class"
 import type { ItemType } from "ant-design-vue"
 import { h } from "vue"
 
@@ -18,7 +18,7 @@ export class PhotoDataService extends VueService {
   @Mut() curImageListName: string = ""
 
   // 存储目录信息
-  @Mut() allDirectories: Directory[] = []
+  @Invoke("photo:allDirectories") @Mut() allDirectories: Directory[] = []
 
   // 菜单项列表，存储应用中的菜单项信息。包括所有图片、收藏夹和文件夹等菜单。
   @Mut() menus: ItemType[] = [
@@ -35,6 +35,7 @@ export class PhotoDataService extends VueService {
     {
       key: "directories",
       label: "文件夹",
+      title: "文件夹",
       icon: h(FolderOpenOutlined),
       children: []
     }

@@ -99,6 +99,9 @@ export function toNative<Props extends VueComponentBaseProps, Emit extends Emits
         metadata.ipcListener.forEach((item) => {
           ;(instance as any)["$off_" + item.methodName]?.()
         })
+        for (let item of metadata.eventListener) {
+          item.eventTarget.removeEventListener(item.eventName, (instance as any)[item.methodName])
+        }
       })
 
       onUnmounted(instance.onUnmounted.bind(instance))

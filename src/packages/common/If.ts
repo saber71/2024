@@ -32,13 +32,16 @@ export function If<Result>(cond: Condition): If<Result> {
     /**
      * 设置其他情况下的结果。
      * @param value 其他情况下的结果值，可以是直接的值或者返回值的函数。
+     * @param padStart 如果结果值是字符串的情况下，是否在结果值前面添加空格，默认为 true。
      * @returns 返回最终结果，调用 `done` 方法来结束条件判断流程并获取结果。
      */
-    else(value: Value<Result>) {
+    else(value: Value<Result>, padStart: boolean = true) {
       // 如果 else 分支未被设置，初始化并设置结果。
       if (!record.else) record.else = {} as any
       record.else!.then = value
-      return object.done()
+      const result = object.done()
+      if (typeof result === "string" && padStart) return (" " + result) as any
+      return result
     },
     /**
      * 添加另一个条件分支。
@@ -84,7 +87,7 @@ interface Record {
 
 interface If<Result = any> {
   then(value: Value<Result>): this
-  else(value: Value<Result>): Result
+  else(value: Value<Result>, padStart?: boolean): Result
   elseIf(cond: Condition): this
   done(): Result
 }

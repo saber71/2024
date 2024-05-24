@@ -150,7 +150,7 @@ export class Photo {
       const picturePath = app.getPath("pictures")
       const directoryName = basename(picturePath)
       const array = await this.collection.save<Directories>({
-        data: [{ name: directoryName, path: picturePath }],
+        array: [{ name: directoryName, path: picturePath }],
         _id: ALL_DIRECTORIES
       })
       data = array[0]

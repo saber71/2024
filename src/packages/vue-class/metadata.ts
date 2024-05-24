@@ -40,6 +40,8 @@ const childInstMapKey: InjectionKey<Record<string, VueComponent>> = Symbol("chil
 export const initMutKey = Symbol("init-mut")
 
 export class VueClassMetadata {
+  static invokeFn = (...args: any[]): Promise<any> => Promise.resolve()
+
   isComponent = false
 
   componentOption?: ComponentOption
@@ -64,6 +66,8 @@ export class VueClassMetadata {
 
   readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
 
+  readonly invokes: Array<{ propName: string; args: any[] }> = []
+
   readonly links: {
     refName?: string
     propName: string
@@ -74,6 +78,8 @@ export class VueClassMetadata {
   readonly vueInject: Array<{ propName: string; provideKey: any }> = []
 
   readonly bindThis: string[] = []
+
+  readonly eventListener: Array<{ eventTarget: EventTarget; eventName: string; methodName: string }> = []
 
   readonly hooks: { methodName: string; type: HookType }[] = []
 
@@ -89,6 +95,19 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleEventListener(instance: object) {
+    for (let item of this.eventListener) {
+      const method = (instance as any)[item.methodName].bind(instance)
+      item.eventTarget.addEventListener(item.eventName, method)
+    }
+  }
+
+  handleInvokes(instance: object) {
+    for (let item of this.invokes) {
+      VueClassMetadata.invokeFn(...item.args).then((res) => ((instance as any)[item.propName] = res))
+    }
   }
 
   handleComponentOption(instance: VueComponent) {
@@ -323,6 +342,8 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleWatchers(instance)
   metadata.handleBindThis(instance)
   metadata.handleIpcListener(instance)
+  metadata.handleInvokes(instance)
+  metadata.handleEventListener(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)
