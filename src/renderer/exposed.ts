@@ -45,10 +45,10 @@ export const invoke: Exposed["api"]["invoke"] = async (...args: any[]) => {
  */
 function hook<Channel extends keyof SendChannelMap, Value extends SendChannelMap[Channel]>(
   eventName: Channel,
-  initValue: Value[0]
-): Ref<UnwrapRef<Value[0]>> {
+  initValue: Value
+): Ref<UnwrapRef<Value>> {
   const result = ref(initValue)
-  listenIpcRenderer(eventName, ((value: any) => (result.value = value)) as any)
+  listenIpcRenderer(eventName, (value: any) => (result.value = value))
   return result
 }
 
@@ -71,7 +71,7 @@ export const windowInfo = Object.freeze({
  */
 export function listenIpcRenderer<Channel extends keyof SendChannelMap>(
   channel: Channel,
-  callback: (...args: SendChannelMap[Channel]) => void
+  callback: (args: SendChannelMap[Channel]) => void
 ): () => void {
-  return electronApi.ipcRenderer.on(channel, (_, args) => callback(...args))
+  return electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
 }

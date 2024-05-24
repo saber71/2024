@@ -1,4 +1,4 @@
-import { CloseOutlined, MinusOutlined } from "@ant-design/icons-vue"
+import { BlockOutlined, BorderOutlined, CloseOutlined, MinusOutlined } from "@ant-design/icons-vue"
 import {
   BindThis,
   Component,
@@ -10,8 +10,6 @@ import {
 import { invoke, windowInfo } from "@renderer/exposed.ts"
 import type { VNode, VNodeChild } from "vue"
 import "./index.scss"
-import maximum from "./maximum.svg"
-import roundRect from "./round-rect.svg"
 
 export interface TitleBarProps extends VueComponentBaseProps {
   icon: string
@@ -49,7 +47,7 @@ export class TitleBarInst extends VueComponent<TitleBarProps> {
             <MinusOutlined />
           </div>
           <div class={"scalable"} onClick={this.handleWindowMaximize}>
-            {windowInfo.isMaximize.value ? <img src={maximum} /> : <img src={roundRect} />}
+            {windowInfo.isMaximize.value ? <BlockOutlined /> : <BorderOutlined />}
           </div>
           <div class={"closable"} onClick={this.handleWindowClose}>
             <CloseOutlined />

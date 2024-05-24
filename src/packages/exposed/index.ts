@@ -3,10 +3,10 @@ import type { PhotoInvokeChannelMap, PhotoSendChannelMap } from "@packages/ipc-h
 import type { SaveDialogOptions } from "electron"
 
 export interface SendChannelMap extends PhotoSendChannelMap {
-  sendWindowId: [number]
-  "window:isMaximized": [boolean]
-  "window:isShow": [boolean]
-  "window:isFocus": [boolean]
+  sendWindowId: number
+  "window:isMaximized": boolean
+  "window:isShow": boolean
+  "window:isFocus": boolean
 }
 
 export interface InvokeChannelMap extends PhotoInvokeChannelMap {

@@ -82,13 +82,13 @@ export interface PhotoSendChannelMap {
    * 消息类型 "photo:sendImageInfo"，表示发送图片信息。
    * 参数是一个ImageInfo类型的数组，用于包含多个图片的详细信息。
    */
-  "photo:sendImageInfo": [ImageInfo[]]
+  "photo:sendImageInfo": ImageInfo[]
 
   /**
    * 消息类型 "photo:sendImageInfoEnd"，表示发送图片信息结束。
    * 此消息类型不接受任何参数。
    */
-  "photo:sendImageInfoEnd": []
+  "photo:sendImageInfoEnd": void
 }
 
 const ALL_DIRECTORIES = "all_directories"

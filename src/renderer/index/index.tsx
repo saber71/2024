@@ -8,7 +8,7 @@ import {
 } from "@packages/vue-class"
 import { invoke } from "@renderer/exposed"
 import type { VNodeChild } from "vue"
-import electronSvg from "../assets/electron.svg"
+import electronSvg from "./assets/electron.svg"
 
 export interface IndexProps extends VueComponentBaseProps {}
 
@@ -21,7 +21,7 @@ export class IndexInst extends VueComponent<IndexProps> {
   }
 
   @BindThis() handleOpenPhoto() {
-    invoke("openPhoto")
+    invoke("photo:open")
   }
 
   @BindThis()

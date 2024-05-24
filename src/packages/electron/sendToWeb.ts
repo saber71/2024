@@ -4,7 +4,7 @@ import type { BrowserWindow } from "electron"
 export function sendToWeb<Channel extends keyof SendChannelMap>(
   window: BrowserWindow,
   channel: Channel,
-  ...args: SendChannelMap[Channel]
+  args?: SendChannelMap[Channel]
 ) {
-  window.webContents.send(channel, ...args)
+  window.webContents.send(channel, args)
 }

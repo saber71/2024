@@ -1,8 +1,6 @@
 .title-bar {
   position: relative;
   height: 40px;
-  background: #222222;
-  color: white;
 
   .title {
     height: 100%;
@@ -50,10 +48,6 @@
       align-items: center;
       justify-content: center;
       transition: background-color 0.1s;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
 
       img {
         width: 16px;
