@@ -3,42 +3,76 @@ import { BrowserWindow, dialog, ipcMain } from "electron"
 import { channels, Handler } from "./handler.ts"
 import "./photo.ts"
 
+/**
+ * `IpcHandler` 类用于安装和处理IPC（Inter-Process Communication）事件。
+ * 该类提供了多个方法来处理不同的IPC频道事件，例如 `ping`，`showSaveDialog`等。
+ */
 export class IpcHandler {
+  /**
+   * 在静态方法 `install` 中，通过遍历 `channels` 数组来安装所有的IPC处理器。
+   * 对于每个频道，它将创建一个实例（如果尚未创建），并为该频道绑定相应的事件处理函数。
+   */
   static install() {
-    const instanceMap = new Map()
+    const instanceMap = new Map() // 创建一个映射，用于存储处理器实例。
     for (let item of channels) {
-      let instance = instanceMap.get(item.clazz)
-      if (!instance) instanceMap.set(item.clazz, (instance = new item.clazz()))
-      ipcMain.handle(item.channel, (e, ...args) => (instance as any)[item.methodName](...args, e))
+      // 遍历所有通道配置项。
+      let instance = instanceMap.get(item.clazz) // 尝试获取当前通道对应的实例。
+      if (!instance) instanceMap.set(item.clazz, (instance = new item.clazz())) // 如果实例不存在，则创建并存储一个新实例。
+      ipcMain.handle(item.channel, (e, ...args) => (instance as any)[item.methodName](...args, e)) // 绑定事件处理函数。
     }
   }
 
+  /**
+   * 处理 `ping` 频道的IPC事件。
+   * @param args - 传递给 `ping` 方法的参数。
+   */
   @Handler() ping(...args: InvokeChannelMap["ping"]["args"]) {
-    console.log(...args)
+    console.log(...args) // 在控制台日志中输出传入的参数。
   }
 
+  /**
+   * 处理 `showSaveDialog` 频道的IPC事件，用于显示保存对话框。
+   * @param args - 传递给 `showSaveDialog` 方法的参数，第一个参数为对话框选项。
+   * @returns 返回一个承诺，解析为 `dialog.showSaveDialog` 方法的返回值（文件路径）。
+   */
   @Handler()
   async showSaveDialog(
     ...args: InvokeChannelMap["showSaveDialog"]["args"]
   ): Promise<InvokeChannelMap["showSaveDialog"]["return"]> {
-    const option = args[0]
-    const result = await dialog.showSaveDialog(option)
-    return result.filePath
+    const option = args[0] // 提取对话框选项。
+    const result = await dialog.showSaveDialog(option) // 显示保存对话框并等待结果。
+    return result.filePath // 返回文件路径。
   }
 
+  /**
+   * 处理 `window:maximize` 频道的IPC事件，用于最大化窗口。
+   * @param id - 窗口的ID。
+   */
   @Handler("window:maximize") windowMaximize(id: number) {
-    BrowserWindow.fromId(id)?.maximize()
+    BrowserWindow.fromId(id)?.maximize() // 尝试最大化指定ID的窗口。
   }
 
+  /**
+   * 处理 `window:unmaximize` 频道的IPC事件，用于取消最大化窗口。
+   * @param id - 窗口的ID。
+   */
   @Handler("window:unmaximize") windowUnmaximize(id: number) {
-    BrowserWindow.fromId(id)?.unmaximize()
+    BrowserWindow.fromId(id)?.unmaximize() // 尝试取消最大化指定ID的窗口。
   }
 
+  /**
+   * 处理 `window:minimize` 频道的IPC事件，用于最小化窗口。
+   * @param id - 窗口的ID。
+   */
   @Handler("window:minimize") windowMinimize(id: number) {
-    BrowserWindow.fromId(id)?.minimize()
+    BrowserWindow.fromId(id)?.minimize() // 尝试最小化指定ID的窗口。
   }
 
+  /**
+   * 处理 `window:close` 频道的IPC事件，用于关闭窗口。
+   * @param id - 窗口的ID。
+   */
   @Handler("window:close") windowClose(id: number) {
-    BrowserWindow.fromId(id)?.close()
+    BrowserWindow.fromId(id)?.close() // 尝试关闭指定ID的窗口。
   }
 }
