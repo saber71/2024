@@ -31,7 +31,7 @@ app.whenReady().then(() => {
 
   IpcHandler.install()
 
-  createWindow({ html: "index" }).then((window) => {
+  createWindow({ html: "index", frame: false }).then((window) => {
     window.on("closed", () => app.exit())
   })
 

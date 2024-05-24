@@ -6,6 +6,7 @@ import {
   VueComponent,
   type VueComponentBaseProps
 } from "@packages/vue-class"
+import TitleBar from "@renderer/components/title-bar"
 import { invoke } from "@renderer/exposed"
 import type { VNodeChild } from "vue"
 import electronSvg from "./assets/electron.svg"
@@ -40,6 +41,12 @@ export class IndexInst extends VueComponent<IndexProps> {
   render(): VNodeChild {
     return (
       <div>
+        <TitleBar
+          class={"top-0 left-0 w-full bg-white"}
+          title={"Electron"}
+          icon={electronSvg}
+          style={{ position: "fixed", color: "black" }}
+        />
         <img alt="logo" class="logo" src={electronSvg} />
         <div class="creator">Powered by electron-vite</div>
         <div class="text">

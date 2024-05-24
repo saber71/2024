@@ -39,20 +39,5 @@
     top: 0;
     display: flex;
     align-items: center;
-
-    div {
-      cursor: default;
-      width: 40px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.1s;
-
-      img {
-        width: 16px;
-        height: 16px;
-      }
-    }
   }
 }

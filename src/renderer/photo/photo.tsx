@@ -13,7 +13,7 @@ import { Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
-import icon from "./icon.svg"
+import icon from "./assets/icon.svg"
 
 export interface PhotoProps extends VueComponentBaseProps {}
 

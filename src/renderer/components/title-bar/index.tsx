@@ -8,6 +8,7 @@ import {
   type VueComponentBaseProps
 } from "@packages/vue-class"
 import { invoke, windowInfo } from "@renderer/exposed.ts"
+import { Button } from "ant-design-vue"
 import type { VNode, VNodeChild } from "vue"
 import "./index.scss"
 
@@ -36,22 +37,22 @@ export class TitleBarInst extends VueComponent<TitleBarProps> {
 
   render(): VNodeChild {
     return (
-      <div class={"title-bar draggable"}>
+      <div class={"title-bar app-draggable"}>
         <div class={"title"}>
           <img src={this.props.icon} />
           <span>{this.props.title}</span>
         </div>
-        <div class={"center not-draggable"}>{this.props.renderCenter?.()}</div>
-        <div class={"buttons not-draggable"}>
-          <div class={"minimum"} onClick={this.handleWindowMinimum}>
+        <div class={"center app-not-draggable"}>{this.props.renderCenter?.()}</div>
+        <div class={"buttons app-not-draggable"}>
+          <Button class={"h-full border-transparent"} onClick={this.handleWindowMinimum}>
             <MinusOutlined />
-          </div>
-          <div class={"scalable"} onClick={this.handleWindowMaximize}>
+          </Button>
+          <Button class={"h-full border-transparent"} onClick={this.handleWindowMaximize}>
             {windowInfo.isMaximize.value ? <BlockOutlined /> : <BorderOutlined />}
-          </div>
-          <div class={"closable"} onClick={this.handleWindowClose}>
+          </Button>
+          <Button class={"h-full border-transparent"} onClick={this.handleWindowClose}>
             <CloseOutlined />
-          </div>
+          </Button>
         </div>
       </div>
     )
