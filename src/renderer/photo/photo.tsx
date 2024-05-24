@@ -1,15 +1,18 @@
+import { Inject } from "@packages/dependency-injection"
 import { Styles } from "@packages/style"
 import {
   Component,
   type ComponentProps,
   Disposable,
+  Mut,
   toNative,
   VueComponent,
   type VueComponentBaseProps
 } from "@packages/vue-class"
-import Flex from "@renderer/components/flex"
 import TitleBar from "@renderer/components/title-bar"
-import Menu from "@renderer/photo/menu"
+import { PhotoDataService } from "@renderer/photo/data.service.ts"
+import { Flex, Menu } from "ant-design-vue"
+import type { Key } from "ant-design-vue/es/_util/type"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
 import icon from "./icon.svg"
@@ -19,6 +22,10 @@ export interface PhotoProps extends VueComponentBaseProps {}
 @Component()
 export class PhotoInst extends VueComponent<PhotoProps> {
   static readonly defineProps: ComponentProps<PhotoProps> = ["inst"]
+
+  @Inject() dataService: PhotoDataService
+  @Mut() selectedKeys: Key[] = []
+  @Mut() openKeys: Key[] = []
 
   @Disposable() style = new Styles<"photo-container" | "photo-container_layout" | "photo-main" | "photo-main_wrap">()
     .add("photo-container", {
@@ -46,7 +53,13 @@ export class PhotoInst extends VueComponent<PhotoProps> {
       <div class={this.style.classNames["photo-container"]}>
         <TitleBar icon={icon} title={"照片"} />
         <Flex class={this.style.classNames["photo-container_layout"]}>
-          <Menu />
+          <Menu
+            items={this.dataService.menus}
+            selectedKeys={this.selectedKeys}
+            openKeys={this.openKeys}
+            mode={"vertical"}
+            onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
+          />
           <div class={this.style.classNames["photo-main"]}>
             <div class={this.style.classNames["photo-main_wrap"]}>
               <RouterView />

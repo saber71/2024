@@ -6,7 +6,8 @@ export const router = createRouter({
   routes: [
     {
       path: "/img-list",
-      component: ImgList
+      component: ImgList,
+      name: ImgList.name
     },
     {
       path: "/",

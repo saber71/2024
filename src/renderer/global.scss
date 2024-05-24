@@ -1,15 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .draggable {
   -webkit-app-region: drag;
 }
 
 .not-draggable {
   -webkit-app-region: no-drag;
-}
-
-.h-full {
-  height: 100%;
-}
-
-.flex-grow {
-  flex-grow: 1;
 }

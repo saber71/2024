@@ -45,5 +45,6 @@ describe("chineseNumber", () => {
     expect(chineseNumber(1034)).toBe("一千零三十四")
     expect(chineseNumber(12301234)).toBe("一千二百三十万一千二百三十四")
     expect(chineseNumber(1034567890)).toBe("十亿三千四百五十六万七千八百九十")
+    expect(chineseNumber(3134567890)).toBe("三十一亿三千四百五十六万七千八百九十")
   })
 })
