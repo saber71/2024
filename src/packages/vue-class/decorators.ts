@@ -1,4 +1,5 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
+import type { debounce, throttle } from "throttle-debounce"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
@@ -317,12 +318,53 @@ export function BindThis() {
   }
 }
 
+/**
+ * 生成一个用于监听事件的装饰器。
+ * @param eventTarget 事件的目标对象，比如window或者document。
+ * @param eventName 要监听的事件名称，必须是WindowEventMap中定义的事件名。
+ * @returns 返回一个函数，该函数接收两个参数：target和arg。target是应用装饰器的对象，arg是装饰的方法。
+ */
 export function EventListener(eventTarget: EventTarget, eventName: keyof WindowEventMap) {
   return (target: object, arg: any) => {
+    // 为指定的方法添加事件监听信息到metadata中
     getOrCreateMetadata(target, arg).eventListener.push({
+      methodName: getName(arg), // 获取方法名
+      eventName, // 事件名称
+      eventTarget // 事件目标
+    })
+  }
+}
+
+/**
+ * Throttle装饰器：为方法添加节流逻辑。
+ * @param option 节流配置对象，可选参数。
+ * - delay 延迟时间，默认为100ms。
+ * - options 调用throttle函数时的其他选项。
+ * @returns 返回一个函数，该函数用于修饰目标对象的方法。
+ */
+export function Throttle(option?: { delay?: number; options?: Parameters<typeof throttle>[2] }) {
+  return (target: object, arg: any) => {
+    // 为方法添加节流配置到元数据中
+    getOrCreateMetadata(target, arg).throttles.push({
       methodName: getName(arg),
-      eventName,
-      eventTarget
+      args: [option?.delay ?? 100, option]
+    })
+  }
+}
+
+/**
+ * Debounce装饰器：为方法添加防抖逻辑。
+ * @param option 防抖配置对象，可选参数。
+ * - delay 延迟时间，默认为100ms。
+ * - options 调用debounce函数时的其他选项。
+ * @returns 返回一个函数，该函数用于修饰目标对象的方法。
+ */
+export function Debounce(option?: { delay?: number; options?: Parameters<typeof debounce>[2] }) {
+  return (target: object, arg: any) => {
+    // 为方法添加防抖配置到元数据中
+    getOrCreateMetadata(target, arg).debounce.push({
+      methodName: getName(arg),
+      args: [option?.delay ?? 100, option]
     })
   }
 }

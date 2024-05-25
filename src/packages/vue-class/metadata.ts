@@ -1,5 +1,6 @@
 import type { SendChannelMap } from "@packages/exposed"
 import { listenIpcRenderer } from "@renderer/exposed.ts"
+import { debounce, throttle } from "throttle-debounce"
 import {
   computed,
   inject,
@@ -66,6 +67,10 @@ export class VueClassMetadata {
 
   readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
 
+  readonly throttles: { methodName: string; args: any[] }[] = []
+
+  readonly debounce: { methodName: string; args: any[] }[] = []
+
   readonly invokes: Array<{ propName: string; args: any[] }> = []
 
   readonly links: {
@@ -95,6 +100,22 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleDebounce(instance: any) {
+    for (let item of this.debounce) {
+      const method = instance[item.methodName].bind(instance)
+      instance[item.methodName] = method
+      debounce(item.args[0], method, item.args[1])
+    }
+  }
+
+  handleThrottle(instance: any) {
+    for (let item of this.throttles) {
+      const method = instance[item.methodName].bind(instance)
+      instance[item.methodName] = method
+      throttle(item.args[0], method, item.args[1])
+    }
   }
 
   handleEventListener(instance: object) {
@@ -344,6 +365,8 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleIpcListener(instance)
   metadata.handleInvokes(instance)
   metadata.handleEventListener(instance)
+  metadata.handleDebounce(instance)
+  metadata.handleThrottle(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)
