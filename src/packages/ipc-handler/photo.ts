@@ -19,6 +19,7 @@ export interface Directory {
   path: string
   children?: Directory[]
 }
+
 /**
  * 定义与照片操作相关的调用渠道映射。
  * 提供了一系列照片管理功能的接口定义，包括打开照片、获取所有目录、添加和移除目录、读取图片等。

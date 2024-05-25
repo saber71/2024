@@ -34,9 +34,18 @@ app.whenReady().then(() => {
     })
   })
 
+  /**
+   * 处理自定义协议请求。atom协议用于处理本地文件请求。
+   * @param protocol 协议处理对象，负责根据请求类型进行相应的处理。
+   * @param request 请求对象，包含需要处理的URL信息。
+   * @returns 返回一个Promise对象，该Promise最终解析为网络请求的结果。
+   */
   protocol.handle("atom", (request) => {
+    // 从请求URL中截取文件路径
     const filePath = request.url.slice("atom://".length)
-    return net.fetch(url.pathToFileURL(filePath[0] + ":" + filePath.substring(1)).toString())
+    // 将文件路径转换为文件URL，并发起网络请求获取内容
+    const path = process.platform === "win32" ? filePath[0] + ":" + filePath.substring(1) : filePath
+    return net.fetch(url.pathToFileURL(path).toString())
   })
 
   // Default open or close DevTools by F12 in development

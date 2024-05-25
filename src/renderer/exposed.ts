@@ -3,25 +3,23 @@
  * 包括设置初始的 Electron API 实例，监听和处理来自 IPC 的消息，
  * 以及提供用于动态获取窗口信息和与 IPC 通信的函数。
  */
-import type { IpcRendererListener } from "@electron-toolkit/preload"
 import type { Exposed, SendChannelMap } from "@packages/exposed"
 import { ref, type Ref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
 const exposed: Exposed = window as any
 
-// 如果 `exposed.electronApi` 未定义，则提供一个默认的 `ipcRenderer` 实现。
-const electronApi = exposed.electronApi ?? {
-  ipcRenderer: {
-    on(channel: string, listener: IpcRendererListener) {},
-    once(channel: string, listener: IpcRendererListener) {}
-  }
-}
+/**
+ * 获取并保存electronApi的引用
+ * 该操作不接受任何参数
+ * 也不直接返回任何值，但保存了electronApi的引用以供后续使用
+ */
+const electronApi = exposed.electronApi
 
-// 如果 `exposed.api` 未定义，则提供一个默认的 API 实现。
-const api = exposed.api ?? {
-  invoke: (await import("@packages/ipc-handler/mock.ts")).MockIpcHandler.install()
-}
+/**
+ * 获取并保存exposed对象中的api属性。
+ */
+const api = exposed.api
 
 // 获取当前窗口的id
 const windowIdPromise = api.invoke("window:id")

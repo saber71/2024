@@ -1,6 +1,6 @@
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
-import { extname, resolve } from "node:path"
+import { basename, extname, resolve } from "node:path"
 import { promisify } from "node:util"
 import { createThumbnail } from "./createThumbnail"
 
@@ -11,9 +11,10 @@ const sizeOf = promisify(imageSize)
  * 定义一个包含图像宽高和文件状态信息的接口
  */
 export interface ImageInfo extends Stats {
+  name: string
   width: number
   height: number
-  path: string
+  path: string //如果是视频的话此处是缩略图atom地址，否则是图片atom地址
   filePath: string
 }
 
@@ -38,10 +39,15 @@ export async function getImageInfo(path: string) {
   result.height = size.height
   result.path = "atom://" + absolutePath
   result.filePath = absolutePath
+  result.name = basename(absolutePath)
 
+  // 获取文件扩展名，并转换为小写
   const extName = extname(absolutePath).toLowerCase()
+  // 如果文件扩展名为 "mp4"，则创建缩略图
   if (extName === "mp4") {
+    // 创建缩略图，并获取其路径
     const thumbnailPath = await createThumbnail(absolutePath)
+    // 将缩略图路径设置到结果对象中的 path 属性
     result.path = "atom://" + thumbnailPath
   }
 
