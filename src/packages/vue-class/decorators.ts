@@ -370,6 +370,25 @@ export function Debounce(option?: { delay?: number; options?: Parameters<typeof 
 }
 
 /**
+ * 一个装饰器函数，用于标记一个属性用来接收来自指定频道的数据。
+ * @param channel 指定的IPC频道，该频道必须是SendChannelMap中的一个键。
+ * @param options 可选参数，用于配置消息的处理方式。
+ *                - append?: boolean 是否将接收到的消息追加到现有数据中。
+ *                - concat?: boolean 是否将接收到的消息与现有数据合并。
+ * @returns 返回一个函数，该函数用于作为装饰器应用到类的方法上。
+ */
+export function IpcReceived(channel: keyof SendChannelMap, options?: { append?: boolean; concat?: boolean }) {
+  return (target: object, arg: any) => {
+    // 为指定的属性添加IPC接收元数据
+    getOrCreateMetadata(target, arg).ipcReceived.push({
+      propName: getName(arg), // 获取属性名
+      channel, // IPC频道
+      options // 消息处理选项
+    })
+  }
+}
+
+/**
  * 获取名称 - 根据输入参数的类型返回相应的名称
  * @param arg 可以是一个字符串或者一个包含名称属性的对象
  * @returns 返回一个字符串，表示输入参数的名称

@@ -1,5 +1,4 @@
 import type { SendChannelMap } from "@packages/exposed"
-import { listenIpcRenderer } from "@renderer/exposed.ts"
 import { debounce, throttle } from "throttle-debounce"
 import {
   computed,
@@ -42,6 +41,10 @@ export const initMutKey = Symbol("init-mut")
 
 export class VueClassMetadata {
   static invokeFn = (...args: any[]): Promise<any> => Promise.resolve()
+  static listenIpc =
+    (channel: any, callback: any): Function =>
+    () =>
+      0
 
   isComponent = false
 
@@ -64,6 +67,15 @@ export class VueClassMetadata {
   readonly disposables: { propName: string; methodName?: string }[] = []
 
   readonly readonlys: { propName: string; shallow?: boolean }[] = []
+
+  readonly ipcReceived: {
+    propName: string
+    channel: keyof SendChannelMap
+    options?: {
+      append?: boolean
+      concat?: boolean
+    }
+  }[] = []
 
   readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
 
@@ -100,6 +112,34 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleIpcReceived(instance: any) {
+    for (let item of this.ipcReceived) {
+      instance["$__" + item.channel + "_" + item.propName] = VueClassMetadata.listenIpc(item.channel, (data: any) => {
+        const oldData = instance[item.propName]
+        if (item.options) {
+          if (oldData instanceof Array) {
+            if (item.options.append) {
+              oldData.push(data)
+            } else if (item.options.concat) {
+              if (data instanceof Array) oldData.push(...data)
+              else oldData.push(data)
+            } else instance[item.propName] = data
+          } else if (oldData instanceof Set) {
+            if (item.options.append) {
+              oldData.add(data)
+            } else if (item.options.concat) {
+              if (data instanceof Array) {
+                for (let val of data) {
+                  oldData.add(val)
+                }
+              } else oldData.add(data)
+            } else instance[item.propName] = data
+          } else instance[item.propName] = data
+        } else instance[item.propName] = data
+      })
+    }
   }
 
   handleDebounce(instance: any) {
@@ -156,7 +196,7 @@ export class VueClassMetadata {
   handleIpcListener(instance: object) {
     for (let item of this.ipcListener) {
       const method = (instance as any)[item.methodName].bind(instance)
-      ;(instance as any)["$off_" + item.methodName] = listenIpcRenderer(item.channel, method)
+      ;(instance as any)["$off_" + item.methodName] = VueClassMetadata.listenIpc(item.channel, method)
     }
   }
 
@@ -367,6 +407,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleEventListener(instance)
   metadata.handleDebounce(instance)
   metadata.handleThrottle(instance)
+  metadata.handleIpcReceived(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)

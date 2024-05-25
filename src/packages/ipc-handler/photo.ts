@@ -82,16 +82,16 @@ export interface PhotoInvokeChannelMap {
  */
 export interface PhotoSendChannelMap {
   /**
-   * 消息类型 "photo:sendImageInfo"，表示发送图片信息。
+   * 消息类型 "photo:transferImageInfo"，表示传输图片信息。
    * 参数是一个ImageInfo类型的数组，用于包含多个图片的详细信息。
    */
-  "photo:sendImageInfo": ImageInfo[]
+  "photo:transferImageInfo": ImageInfo[]
 
   /**
-   * 消息类型 "photo:sendImageInfoEnd"，表示发送图片信息结束。
+   * 消息类型 "photo:transferImageInfoEnd"，表示传输图片信息结束。
    * 此消息类型不接受任何参数。
    */
-  "photo:sendImageInfoEnd": void
+  "photo:transferImageInfoEnd": void
 }
 
 const ALL_DIRECTORIES = "all_directories"
@@ -213,12 +213,12 @@ async function sendImageInfos(windowId: number, filePaths: string[]) {
     const result = await Promise.all(promises)
 
     // 将获取到的图片信息（过滤掉未定义项）发送到Web视图
-    sendToWeb(window, "photo:sendImageInfo", result.filter((item) => !!item) as ImageInfo[])
+    sendToWeb(window, "photo:transferImageInfo", result.filter((item) => !!item) as ImageInfo[])
 
     // 更新循环索引，以便下一次循环能够继续从正确的位置开始
     i = j
   }
 
   // 发送图片信息发送结束的信号
-  sendToWeb(window, "photo:sendImageInfoEnd")
+  sendToWeb(window, "photo:transferImageInfoEnd")
 }

@@ -1,7 +1,7 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { ImageInfo } from "@packages/electron"
 import type { Directory } from "@packages/ipc-handler/photo.ts"
-import { Invoke, Mut, Service, VueService, Watcher } from "@packages/vue-class"
+import { Invoke, IpcReceived, Mut, Service, VueService, Watcher } from "@packages/vue-class"
 import type { ItemType } from "ant-design-vue"
 import { h } from "vue"
 
@@ -42,7 +42,9 @@ export class PhotoDataService extends VueService {
   ]
 
   // 图片信息列表，用于存储图片的各种信息，例如元数据、文件路径等。
-  @Mut() imageInfos: ImageInfo[] = []
+  @IpcReceived("photo:transferImageInfo", { concat: true })
+  @Mut()
+  imageInfos: ImageInfo[] = []
 
   /**
    * 监听器函数，更新菜单中的目录信息。
