@@ -46,22 +46,12 @@ export interface PhotoInvokeChannelMap {
   }
 
   /**
-   * 添加一个新的照片目录。
-   * 参数：string 类型，表示要添加的目录路径。
+   * 更新照片目录。
+   * 参数：Directory 数组，表示要更新的目录路径。
    * 无返回值。
    */
-  "photo:addDirectory": {
-    args: [string]
-    return: void
-  }
-
-  /**
-   * 从目录列表中移除一个目录。
-   * 参数：string 类型，表示要移除的目录路径。
-   * 无返回值。
-   */
-  "photo:removeDirectory": {
-    args: [string]
+  "photo:updateDirectories": {
+    args: [Directory[]]
     return: void
   }
 
@@ -97,6 +87,11 @@ export interface PhotoSendChannelMap {
 const ALL_DIRECTORIES = "all_directories"
 const validExtNames = new Set(["jpeg", "jpg", "png", "bmp", "mp4"])
 
+// 从集合中获取或创建包含所有目录的记录，并返回目录数组。
+interface Directories extends FilterItem {
+  array: Directory[]
+}
+
 // 定义一个Photo类，处理照片相关操作，包括打开照片窗口、添加和移除目录、获取所有目录、读取图片信息。
 export class Photo {
   // 创建一个名为"photo"的集合，用于存储目录信息。
@@ -111,31 +106,13 @@ export class Photo {
 
   /**
    * 添加一个图片目录。
-   * @param path 图片目录的路径。
+   * @param directories 图片目录的路径。
    */
-  @Handler("photo:addDirectory") async addDirectory(path: string) {
-    // 检查目录是否已存在，若不存在则添加。
-    const allDirectories = await this.allDirectories()
-    if (allDirectories.find((item) => item.path === path)) return
-    allDirectories.push({
-      name: basename(path),
-      path
+  @Handler("photo:updateDirectories") async updateDirectories(directories: Directory[]) {
+    await this.collection.save<Directories>({
+      _id: ALL_DIRECTORIES,
+      array: directories
     })
-    await this.collection.save(allDirectories)
-  }
-
-  /**
-   * 移除一个图片目录。
-   * @param path 图片目录的路径。
-   */
-  @Handler("photo:removeDirectory") async removeDirectory(path: string) {
-    // 从目录列表中查找并移除指定路径的目录。
-    const allDirectories = await this.allDirectories()
-    const index = allDirectories.findIndex((val) => (val.path = path))
-    if (index >= 0) {
-      allDirectories.splice(index, 1)
-      await this.collection.save(allDirectories)
-    }
   }
 
   /**
@@ -143,10 +120,6 @@ export class Photo {
    * @returns 返回目录列表。
    */
   @Handler("photo:allDirectories") async allDirectories() {
-    // 从集合中获取或创建包含所有目录的记录，并返回目录数组。
-    interface Directories extends FilterItem {
-      array: Directory[]
-    }
     let data = await this.collection.getById<Directories>(ALL_DIRECTORIES)
     if (!data) {
       // 如果记录不存在，则创建一个包含图片路径的记录。

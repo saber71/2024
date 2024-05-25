@@ -389,6 +389,21 @@ export function IpcReceived(channel: keyof SendChannelMap, options?: { append?: 
 }
 
 /**
+ * 为指定对象的属性添加同步IPC通信的能力。当这个属性发生变化时，会发送一个同步消息到指定的频道。
+ * @param channel IPC通信的频道，对应于InvokeChannelMap中的键。
+ * @returns 返回一个装饰器函数，该函数接收目标对象和属性名作为参数，并为该属性添加IPC同步通信的元数据。
+ */
+export function IpcSync(channel: keyof InvokeChannelMap) {
+  return (target: object, arg: any) => {
+    // 为指定对象的属性添加或更新IPC同步通信的元数据
+    getOrCreateMetadata(target, arg).ipcSync.push({
+      propName: getName(arg), // 获取并记录属性名
+      channel // 记录IPC频道
+    })
+  }
+}
+
+/**
  * 获取名称 - 根据输入参数的类型返回相应的名称
  * @param arg 可以是一个字符串或者一个包含名称属性的对象
  * @returns 返回一个字符串，表示输入参数的名称

@@ -1,4 +1,4 @@
-import type { SendChannelMap } from "@packages/exposed"
+import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
 import { debounce, throttle } from "throttle-debounce"
 import {
   computed,
@@ -77,6 +77,8 @@ export class VueClassMetadata {
     }
   }[] = []
 
+  readonly ipcSync: Array<{ propName: string; channel: keyof InvokeChannelMap }> = []
+
   readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
 
   readonly throttles: { methodName: string; args: any[] }[] = []
@@ -112,6 +114,18 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleIpcSync(instance: any) {
+    for (let item of this.ipcSync) {
+      let updateCount = 0
+      // 当该属性被Invoke装饰时，跳过它的第一次更新，因为这一次更新是从IPC发过来的
+      if (!this.invokes.find((item) => item.propName === item.propName)) updateCount++
+      instance["$__" + item.channel + "_" + item.propName] = watch(instance[Symbol.for(item.propName)], () => {
+        if (updateCount) VueClassMetadata.invokeFn(item.channel, instance[item.propName])
+        updateCount++
+      })
+    }
   }
 
   handleIpcReceived(instance: any) {
@@ -408,6 +422,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleDebounce(instance)
   metadata.handleThrottle(instance)
   metadata.handleIpcReceived(instance)
+  metadata.handleIpcSync(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)
