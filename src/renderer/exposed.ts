@@ -18,15 +18,13 @@ const electronApi = exposed.electronApi ?? {
   }
 }
 
-// 创建一个 Promise，用于在接收到 "sendWindowId" 事件时解析窗口 ID。
-const receiveWindowIdPromise = new Promise<number>((resolve) => {
-  listenIpcRenderer("sendWindowId", (id) => resolve(id))
-})
-
 // 如果 `exposed.api` 未定义，则提供一个默认的 API 实现。
 const api = exposed.api ?? {
   invoke: (await import("@packages/ipc-handler/mock.ts")).MockIpcHandler.install()
 }
+
+// 获取当前窗口的id
+const windowIdPromise = api.invoke("window:id")
 
 /**
  * 提供一个用于调用 IPC 接口的函数。
@@ -34,7 +32,7 @@ const api = exposed.api ?? {
  * @returns 返回 IPC 调用的结果。
  */
 export const invoke: Exposed["api"]["invoke"] = async (...args: any[]) => {
-  return (api.invoke as any)(...args, await receiveWindowIdPromise)
+  return (api.invoke as any)(...args, await windowIdPromise)
 }
 
 /**
@@ -60,7 +58,7 @@ export const windowInfo = Object.freeze({
   isShow: hook("window:isShow", true),
   isMaximize: hook("window:isMaximized", false),
   isFocus: hook("window:isFocus", false),
-  id: receiveWindowIdPromise
+  id: windowIdPromise
 })
 
 /**

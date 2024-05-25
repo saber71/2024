@@ -18,6 +18,10 @@ export interface InvokeChannelMap extends PhotoInvokeChannelMap {
     args: [SaveDialogOptions]
     return: string
   }
+  "window:id": {
+    args: []
+    return: number
+  }
   "window:maximize": {
     args: []
     return: void

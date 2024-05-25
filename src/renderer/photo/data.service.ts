@@ -49,13 +49,22 @@ export class PhotoDataService extends VueService {
    * 随着allDirectories的变化，动态更新菜单项的子目录列表。
    */
   @Watcher() updateMenuDirectories() {
-    ;(this.menus[2] as any).children = this.allDirectories.map(
-      (dir) =>
-        ({
-          key: dir.path,
-          label: dir.name,
-          icon: h(FolderOpenOutlined)
-        }) as ItemType
-    )
+    ;(this.menus[2] as any).children = this.allDirectories.map(toItemType)
+  }
+}
+
+/**
+ * 将目录对象转换为项目类型对象。
+ *
+ * @param dir 目录对象，包含路径、名称以及可能的子目录信息。
+ * @returns 返回一个具有键、标签、标题、图标和子项的项目类型对象。
+ */
+function toItemType(dir: Directory): ItemType {
+  return {
+    key: dir.path, // 使用目录的路径作为键
+    label: dir.name, // 目录的名称作为标签和标题
+    title: dir.name,
+    icon: h(FolderOpenOutlined), // 使用打开的文件夹图标
+    children: dir.children?.map(toItemType) // 如果存在子目录，递归地将它们转换为项目类型对象
   }
 }

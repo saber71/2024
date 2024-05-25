@@ -12,10 +12,12 @@ import { join } from "path"
  *
  * @property {string} name - 目录的名称。
  * @property {string} path - 目录的路径。
+ * @property {Directory[]} children - 子目录
  */
 export interface Directory {
   name: string
   path: string
+  children?: Directory[]
 }
 /**
  * 定义与照片操作相关的调用渠道映射。
