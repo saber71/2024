@@ -17,6 +17,11 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       <div>
         {this.dataService.curImageListName}
         <img src={"atom://D:/WebstormProjects/2024/resources/icon.png"} />
+        {this.dataService.imageInfos.map((info) => (
+          <div>
+            <img src={info.path} width={info.width} height={info.height} />
+          </div>
+        ))}
       </div>
     )
   }

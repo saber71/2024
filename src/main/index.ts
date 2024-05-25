@@ -5,6 +5,7 @@ import { createWindow } from "@packages/electron"
 import { IpcHandler } from "@packages/ipc-handler"
 import { app, BrowserWindow, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
+import * as process from "node:process"
 import * as url from "node:url"
 
 ffmpeg.setFfmpegPath(FfmpegPath)
@@ -45,7 +46,7 @@ app.whenReady().then(() => {
     const filePath = request.url.slice("atom://".length)
     // 将文件路径转换为文件URL，并发起网络请求获取内容
     const path = process.platform === "win32" ? filePath[0] + ":" + filePath.substring(1) : filePath
-    return net.fetch(url.pathToFileURL(path).toString())
+    return net.fetch(url.pathToFileURL(decodeURI(path)).toString())
   })
 
   // Default open or close DevTools by F12 in development

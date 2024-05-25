@@ -148,7 +148,7 @@ export class Photo {
             files
               .filter((path) => {
                 // 过滤出有效的图片文件。
-                const extName = extname(path).toLowerCase()
+                const extName = extname(path).toLowerCase().slice(1)
                 return validExtNames.has(extName)
               })
               .map((path) => join(directory.path, path))

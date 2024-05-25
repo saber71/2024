@@ -4,7 +4,7 @@
  * 以及提供用于动态获取窗口信息和与 IPC 通信的函数。
  */
 import type { Exposed, SendChannelMap } from "@packages/exposed"
-import { ref, type Ref, type UnwrapRef } from "vue"
+import { ref, type Ref, unref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
 const exposed: Exposed = window as any
@@ -30,7 +30,7 @@ const windowIdPromise = api.invoke("window:id")
  * @returns 返回 IPC 调用的结果。
  */
 export const invoke: Exposed["api"]["invoke"] = async (...args: any[]) => {
-  return (api.invoke as any)(...args, await windowIdPromise)
+  return (api.invoke as any)(...args.map((item) => unref(item)), await windowIdPromise)
 }
 
 /**

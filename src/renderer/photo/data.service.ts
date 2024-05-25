@@ -20,7 +20,7 @@ export class PhotoDataService extends VueService {
   // 存储目录信息
   @IpcSync("photo:updateDirectories")
   @Invoke("photo:allDirectories")
-  @Mut()
+  @Mut(true)
   allDirectories: Directory[] = []
 
   // 菜单项列表，存储应用中的菜单项信息。包括所有图片、收藏夹和文件夹等菜单。
@@ -66,7 +66,7 @@ export class PhotoDataService extends VueService {
  */
 function toItemType(dir: Directory): ItemType {
   return {
-    key: dir.path, // 使用目录的路径作为键
+    key: "$path:" + dir.path, // 使用目录的路径作为键
     label: dir.name, // 目录的名称作为标签和标题
     title: dir.name,
     icon: h(FolderOpenOutlined), // 使用打开的文件夹图标

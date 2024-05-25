@@ -1,6 +1,7 @@
 import { AppstoreAddOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons-vue"
 import { If } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
+import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
   Component,
@@ -10,9 +11,11 @@ import {
   Mut,
   toNative,
   VueComponent,
-  type VueComponentBaseProps
+  type VueComponentBaseProps,
+  Watcher
 } from "@packages/vue-class"
 import TitleBar from "@renderer/components/title-bar"
+import { invoke } from "@renderer/exposed.ts"
 import { PhotoDataService } from "@renderer/photo/data.service.ts"
 import { Button, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
@@ -34,6 +37,27 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   @Link() asideEl: HTMLElement
   @Mut() asideWidth = -1
   stretchLineDownPos?: MouseEvent
+
+  @Watcher() toReadImageInfos() {
+    const key = this.selectedKeys[0]
+    if (key === "all-images") {
+      invoke("photo:readImages", this.dataService.allDirectories)
+    } else if ((key + "").indexOf("$path:") === 0) {
+      const path = (key + "").replace("$path:", "")
+      const dir = findDirectory(this.dataService.allDirectories, path)
+      if (dir) invoke("photo:readImages", [dir])
+    }
+
+    function findDirectory(directories: Directory[], path: string): Directory | undefined {
+      for (let directory of directories) {
+        if (directory.path === path) return directory
+        if (directory.children) {
+          const result = findDirectory(directory.children, path)
+          if (result) return result
+        }
+      }
+    }
+  }
 
   @BindThis() handleMouseDownStretchLine(e: MouseEvent) {
     this.isStretching = true
@@ -63,7 +87,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
           <div
             ref={"asideEl"}
             class={
-              "relative h-full overflow-auto border-r-gray-100 border-0 border-r border-solid border-box select-none" +
+              "relative h-full overflow-auto border-r-gray-100 border-0 border-r border-solid border-box select-none flex-shrink-0" +
               If(this.collapsed).then("").else("w-96") +
               If(this.isStretching).then("").else("transition-all")
             }

@@ -1,3 +1,4 @@
+import { toAtomUrl } from "@packages/electron/toAtomUrl.ts"
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
 import { basename, extname, resolve } from "node:path"
@@ -37,7 +38,7 @@ export async function getImageInfo(path: string) {
   const result: ImageInfo = stats as any
   result.width = size.width
   result.height = size.height
-  result.path = "atom://" + absolutePath
+  result.path = toAtomUrl(absolutePath)
   result.filePath = absolutePath
   result.name = basename(absolutePath)
 
@@ -48,7 +49,7 @@ export async function getImageInfo(path: string) {
     // 创建缩略图，并获取其路径
     const thumbnailPath = await createThumbnail(absolutePath)
     // 将缩略图路径设置到结果对象中的 path 属性
-    result.path = "atom://" + thumbnailPath
+    result.path = toAtomUrl(thumbnailPath)
   }
 
   return result
