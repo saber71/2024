@@ -3,7 +3,7 @@ import type { ImageInfo } from "@packages/electron"
 import type { Directory } from "@packages/ipc-handler/photo.ts"
 import { Invoke, IpcReceived, IpcSync, Mut, Service, VueService, Watcher } from "@packages/vue-class"
 import type { ItemType } from "ant-design-vue"
-import { h } from "vue"
+import { h, type VNode } from "vue"
 
 /**
  * PhotoDataService 类提供与照片数据相关的服务，
@@ -14,8 +14,8 @@ export class PhotoDataService extends VueService {
   // 当前目录对象，用于存储当前选择的目录信息
   @Mut() curDirectory?: Directory
 
-  // 当前图片列表的名称，用于标识当前显示的图片列表
-  @Mut() curImageListName: string = ""
+  // 当前选中的菜单项
+  @Mut() curItemType?: { label: string; icon: VNode }
 
   // 存储目录信息
   @IpcSync("photo:updateDirectories")

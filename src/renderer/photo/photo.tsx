@@ -42,10 +42,14 @@ export class PhotoInst extends VueComponent<PhotoProps> {
     const key = this.selectedKeys[0]
     if (key === "all-images") {
       invoke("photo:readImages", this.dataService.allDirectories)
+      this.dataService.curDirectory = undefined
     } else if ((key + "").indexOf("$path:") === 0) {
       const path = (key + "").replace("$path:", "")
       const dir = findDirectory(this.dataService.allDirectories, path)
       if (dir) invoke("photo:readImages", [dir])
+      this.dataService.curDirectory = dir
+    } else {
+      this.dataService.curDirectory = undefined
     }
 
     function findDirectory(directories: Directory[], path: string): Directory | undefined {
@@ -80,29 +84,42 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   }
 
   render(): VNodeChild {
+    const curDirectory = this.dataService.curDirectory
+    const imageInfos = this.dataService.imageInfos
+    const curItemType = this.dataService.curItemType
+
     return (
       <div class={"h-full"}>
+        {/*顶部窗口栏*/}
         <TitleBar icon={icon} title={"照片"} />
+
+        {/*应用内容*/}
         <Flex class={"border-0 border-t-gray-100 border-t border-solid"} style={{ height: "calc(100% - 40px)" }}>
+          {/*左侧菜单*/}
           <div
             ref={"asideEl"}
-            class={
-              "relative h-full overflow-auto border-r-gray-100 border-0 border-r border-solid border-box select-none flex-shrink-0" +
-              If(this.collapsed).then("").else("w-96") +
+            class={[
+              "relative h-full overflow-auto border-r-gray-100 border-0 border-r border-solid border-box select-none flex-shrink-0",
+              If(this.collapsed).then("").else("w-96"),
               If(this.isStretching).then("").else("transition-all")
-            }
+            ]}
             style={{
               minWidth: "81px",
               width: this.collapsed ? "81px" : this.asideWidth >= 0 ? this.asideWidth + "px" : "",
               maxWidth: "50%"
             }}
           >
+            {/*折叠按钮*/}
             <Button class={"mt-1 mb-1 ml-0.5"} type={"primary"} onClick={() => (this.collapsed = !this.collapsed)}>
               {this.collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </Button>
+
+            {/*跳转文件夹管理页面*/}
             <Button block type={"dashed"} icon={<AppstoreAddOutlined />}>
               {this.collapsed || (this.asideWidth <= 130 && this.asideWidth >= 0) ? null : "管理文件夹"}
             </Button>
+
+            {/*菜单*/}
             <Menu
               items={this.dataService.menus}
               selectedKeys={this.selectedKeys}
@@ -110,17 +127,46 @@ export class PhotoInst extends VueComponent<PhotoProps> {
               inlineCollapsed={this.collapsed || (this.asideWidth <= 90 && this.asideWidth >= 0)}
               mode={"inline"}
               onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
-              onClick={(val) => console.log(val)}
+              onClick={(val) => (this.dataService.curItemType = val.item as any)}
               style={{ border: "0" }}
             />
+
+            {/*用来拉伸菜单栏的线*/}
             <div
               class={"absolute top-0 right-0 h-full cursor-col-resize"}
               style={{ width: "5px" }}
               onMousedown={this.handleMouseDownStretchLine}
             ></div>
           </div>
+
+          {/*主体部分容器*/}
           <div class={"h-full flex-grow box-border p-1 select-none"}>
+            {/*主体部分*/}
             <div class={"h-full overflow-hidden"}>
+              {/*头部标题和工具栏*/}
+              <Flex align={"center"}>
+                {/*标题部分*/}
+                <div>
+                  {/*大标题*/}
+                  <Flex align={"center"} class={"text-2xl"}>
+                    {curItemType?.icon}
+                    <span class={"ml-2"}>{curItemType?.label}</span>
+                  </Flex>
+
+                  {/*下方小字*/}
+                  <div>
+                    <span>{imageInfos.length ? `${imageInfos.length}张图片` : ""}</span>
+                    {curDirectory?.children?.length ? (
+                      <span class={"ml-2"}>{curDirectory.children.length}个文件夹</span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/*工具栏*/}
+                <div></div>
+              </Flex>
+
+              {/*路由页面*/}
               <RouterView />
             </div>
           </div>

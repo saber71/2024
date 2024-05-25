@@ -64,6 +64,17 @@ export interface PhotoInvokeChannelMap {
     args: [Directory[]]
     return: void
   }
+
+  /**
+   * 获取目录缩略图
+   *
+   * @param args 目录数组，包含一系列目录信息
+   * @return 返回一个字符串数组，包含缩略图的路径或标识
+   */
+  "photo:getDirectoryThumbnail": {
+    args: [Directory[]] // 参数为一个目录数组
+    return: string[] // 返回值为图片地址数组
+  }
 }
 
 /**
@@ -141,23 +152,51 @@ export class Photo {
    */
   @Handler("photo:readImages") async allImage(directories: Directory[], windowId: number) {
     // 并行读取所有目录中的图片文件，然后发送图片信息到指定窗口。
-    const result = (
-      await Promise.all(
-        directories.map((directory) =>
-          promises.readdir(directory.path).then((files) =>
-            files
-              .filter((path) => {
-                // 过滤出有效的图片文件。
-                const extName = extname(path).toLowerCase().slice(1)
-                return validExtNames.has(extName)
-              })
-              .map((path) => join(directory.path, path))
-          )
-        )
-      )
-    ).flat()
+    const result = (await getDirectoryImagePaths(directories)).flat()
     sendImageInfos(windowId, result)
   }
+
+  /**
+   * 处理获取目录缩略图的请求。
+   * @param directories 目录数组，包含了需要获取缩略图的目录信息。
+   * @returns 返回一个Promise，该Promise解析为一个字符串数组，包含目录中图片的路径。
+   *          如果目录中没有图片，则对应位置返回空字符串。
+   */
+  @Handler("photo:getDirectoryThumbnail") async getDirectoryThumbnail(directories: Directory[]) {
+    // 获取目录中所有图片的路径
+    const imagePaths = await getDirectoryImagePaths(directories)
+    return Promise.all(
+      imagePaths.map((paths) => {
+        const firstPath = paths[0]
+        // 如果目录中没有图片，则直接返回空字符串
+        if (!firstPath) return ""
+        // 获取第一个图片的详细信息，然后返回其路径
+        return getImageInfo(firstPath).then((info) => info?.path ?? "")
+      })
+    )
+  }
+}
+
+/**
+ * 获取指定目录中所有图片文件的路径。
+ * @param directories 目录数组，每个目录包含一个路径属性。
+ * @returns 返回一个Promise，该Promise解析为一个包含所有目录中图片文件路径的数组。
+ */
+function getDirectoryImagePaths(directories: Directory[]) {
+  return Promise.all(
+    directories.map((directory) =>
+      promises.readdir(directory.path).then((files) =>
+        // 过滤出目录中的图片文件并保留其完整路径。
+        files
+          .filter((path) => {
+            // 过滤条件：仅保留有效的图片文件扩展名。
+            const extName = extname(path).toLowerCase().slice(1)
+            return validExtNames.has(extName)
+          })
+          .map((path) => join(directory.path, path))
+      )
+    )
+  )
 }
 
 /**

@@ -38,18 +38,24 @@ export class TitleBarInst extends VueComponent<TitleBarProps> {
   render(): VNodeChild {
     return (
       <div class={"title-bar app-draggable"}>
+        {/*左侧应用图片和应用名*/}
         <div class={"title"}>
           <img src={this.props.icon} />
           <span>{this.props.title}</span>
         </div>
+        {/*中间自定义部分*/}
         <div class={"center app-not-draggable"}>{this.props.renderCenter?.()}</div>
+        {/*右侧用来控制窗口的按钮*/}
         <div class={"buttons app-not-draggable"}>
+          {/*最小化*/}
           <Button class={"h-full border-transparent"} onClick={this.handleWindowMinimum}>
             <MinusOutlined />
           </Button>
+          {/*最大化/取消最大化*/}
           <Button class={"h-full border-transparent"} onClick={this.handleWindowMaximize}>
             {windowInfo.isMaximize.value ? <BlockOutlined /> : <BorderOutlined />}
           </Button>
+          {/*关闭窗口*/}
           <Button class={"h-full border-transparent"} onClick={this.handleWindowClose}>
             <CloseOutlined />
           </Button>

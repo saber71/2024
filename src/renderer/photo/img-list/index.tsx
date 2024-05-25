@@ -15,7 +15,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   render(): VNodeChild {
     return (
       <div>
-        {this.dataService.curImageListName}
+        {this.dataService.curItemType?.label}
         <img src={"atom://D:/WebstormProjects/2024/resources/icon.png"} />
         {this.dataService.imageInfos.map((info) => (
           <div>
