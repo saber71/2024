@@ -98,6 +98,8 @@ export class VueClassMetadata {
 
   readonly bindThis: string[] = []
 
+  readonly setup: string[] = []
+
   readonly eventListener: Array<{ eventTarget: EventTarget; eventName: string; methodName: string }> = []
 
   readonly hooks: { methodName: string; type: HookType }[] = []
@@ -114,6 +116,12 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleSetup(instance: any) {
+    for (let methodName of this.setup) {
+      instance[methodName].call(instance)
+    }
   }
 
   handleIpcSync(instance: any) {
@@ -432,6 +440,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   if (instance instanceof VueService) {
     instance.setup()
   }
+  metadata.handleSetup(instance)
   return metadata
 }
 

@@ -1,4 +1,5 @@
 import { toAtomUrl } from "@packages/electron/toAtomUrl.ts"
+import ffmpeg from "fluent-ffmpeg"
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
 import { basename, extname, resolve } from "node:path"
@@ -28,8 +29,14 @@ export async function getImageInfo(path: string) {
   // 将传入的路径解析为绝对路径
   const absolutePath = resolve(path)
 
+  // 获取文件扩展名，并转换为小写
+  const extName = extname(absolutePath).toLowerCase().slice(1)
+
   // 同时获取图像的尺寸和文件状态信息
-  const [size, stats] = await Promise.all([sizeOf(absolutePath), promises.stat(absolutePath)])
+  const [size, stats] = await Promise.all([
+    extName === "mp4" ? videoSize(absolutePath) : sizeOf(absolutePath),
+    promises.stat(absolutePath)
+  ])
 
   // 如果无法获取到图像尺寸或宽高信息，则提前返回undefined
   if (!size || !size.width || !size.height) return
@@ -42,8 +49,6 @@ export async function getImageInfo(path: string) {
   result.filePath = absolutePath
   result.name = basename(absolutePath)
 
-  // 获取文件扩展名，并转换为小写
-  const extName = extname(absolutePath).toLowerCase()
   // 如果文件扩展名为 "mp4"，则创建缩略图
   if (extName === "mp4") {
     // 创建缩略图，并获取其路径
@@ -53,4 +58,17 @@ export async function getImageInfo(path: string) {
   }
 
   return result
+}
+
+function videoSize(path: string) {
+  return new Promise<{ width?: number; height?: number }>((resolve1, reject) => {
+    ffmpeg.ffprobe(path, (err, data) => {
+      if (err) reject(err)
+      else
+        resolve1({
+          width: data.streams[0].width,
+          height: data.streams[0].height
+        })
+    })
+  })
 }

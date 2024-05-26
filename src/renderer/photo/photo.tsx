@@ -17,11 +17,13 @@ import {
 import TitleBar from "@renderer/components/title-bar"
 import { invoke } from "@renderer/exposed.ts"
 import { PhotoDataService } from "@renderer/photo/data.service.ts"
-import { Button, Flex, Menu } from "ant-design-vue"
+import DirectoryManager from "@renderer/photo/directory-manager"
+import { Button, Dropdown, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
 import icon from "./assets/icon.svg"
+import "./photo.scss"
 
 export interface PhotoProps extends VueComponentBaseProps {}
 
@@ -39,6 +41,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   stretchLineDownPos?: MouseEvent
 
   @Watcher() toReadImageInfos() {
+    this.dataService.imageInfos.length = 0
     const key = this.selectedKeys[0]
     if (key === "all-images") {
       invoke("photo:readImages", this.dataService.allDirectories)
@@ -115,19 +118,24 @@ export class PhotoInst extends VueComponent<PhotoProps> {
             </Button>
 
             {/*跳转文件夹管理页面*/}
-            <Button block type={"dashed"} icon={<AppstoreAddOutlined />}>
+            <Button
+              block
+              type={"dashed"}
+              icon={<AppstoreAddOutlined />}
+              onClick={() => this.router.push({ name: DirectoryManager.name })}
+            >
               {this.collapsed || (this.asideWidth <= 130 && this.asideWidth >= 0) ? null : "管理文件夹"}
             </Button>
 
             {/*菜单*/}
             <Menu
-              items={this.dataService.menus}
+              items={this.dataService.asideMenu}
               selectedKeys={this.selectedKeys}
               openKeys={this.openKeys}
               inlineCollapsed={this.collapsed || (this.asideWidth <= 90 && this.asideWidth >= 0)}
               mode={"inline"}
               onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
-              onClick={(val) => (this.dataService.curItemType = val.item as any)}
+              onClick={(val) => (this.dataService.curItemType = val.item.originItemValue as any)}
               style={{ border: "0" }}
             />
 
@@ -140,15 +148,18 @@ export class PhotoInst extends VueComponent<PhotoProps> {
           </div>
 
           {/*主体部分容器*/}
-          <div class={"h-full flex-grow box-border p-1 select-none"}>
+          <div class={"h-full flex-grow box-border select-none relative"}>
             {/*主体部分*/}
-            <div class={"h-full overflow-hidden"}>
+            <div
+              class={"overflow-hidden absolute left-6 top-6"}
+              style={{ width: "calc(100% - 48px)", height: "calc(100% - 24px)" }}
+            >
               {/*头部标题和工具栏*/}
-              <Flex align={"center"}>
+              <Flex class={"px-2 box-border"} justify={"space-between"} style={{ height: "100px" }}>
                 {/*标题部分*/}
                 <div>
                   {/*大标题*/}
-                  <Flex align={"center"} class={"text-2xl"}>
+                  <Flex align={"center"} class={"text-2xl mb-2"}>
                     {curItemType?.icon}
                     <span class={"ml-2"}>{curItemType?.label}</span>
                   </Flex>
@@ -167,10 +178,24 @@ export class PhotoInst extends VueComponent<PhotoProps> {
               </Flex>
 
               {/*路由页面*/}
-              <RouterView />
+              <div class={"overflow-auto"} style={{ height: "calc(100% - 100px)" }}>
+                <RouterView />
+              </div>
             </div>
           </div>
         </Flex>
+
+        {/*右键菜单*/}
+        <div class={"fixed left-0 top-0"} style={this.dataService.contextmenuPos}>
+          <Dropdown
+            trigger={"contextmenu"}
+            open={this.dataService.showContextmenu}
+            onUpdate:open={(val) => (this.dataService.showContextmenu = val)}
+            overlay={<Menu items={this.dataService.curContextmenu}></Menu>}
+          >
+            <div></div>
+          </Dropdown>
+        </div>
       </div>
     )
   }

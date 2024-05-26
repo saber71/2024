@@ -1,0 +1,52 @@
+.directory-item {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+
+  .icon {
+    width: 50%;
+    height: 50%;
+  }
+
+  .add-icon {
+    font-size: 40px;
+    color: #647eff;
+  }
+
+  .add-text {
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%);
+  }
+
+  .thumbnail {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    width: 40%;
+    max-height: 40%;
+  }
+
+  .name {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+  }
+
+  &:hover {
+    border-color: transparent;
+    box-shadow:
+      0 1px 2px -2px rgba(0, 0, 0, 0.16),
+      0 3px 6px 0 rgba(0, 0, 0, 0.12),
+      0 5px 12px 4px rgba(0, 0, 0, 0.09);
+  }
+}

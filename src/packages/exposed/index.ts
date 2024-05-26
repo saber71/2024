@@ -1,6 +1,6 @@
 import type { electronAPI } from "@electron-toolkit/preload"
 import type { PhotoInvokeChannelMap, PhotoSendChannelMap } from "@packages/ipc-handler/photo.ts"
-import type { SaveDialogOptions } from "electron"
+import type { OpenDialogOptions, SaveDialogOptions } from "electron"
 
 export interface SendChannelMap extends PhotoSendChannelMap {
   sendWindowId: number
@@ -16,6 +16,14 @@ export interface InvokeChannelMap extends PhotoInvokeChannelMap {
   }
   showSaveDialog: {
     args: [SaveDialogOptions]
+    return: string
+  }
+  showOpenDialog: {
+    args: [OpenDialogOptions]
+    return: string
+  }
+  showItemInFolder: {
+    args: [string]
     return: string
   }
   "window:id": {

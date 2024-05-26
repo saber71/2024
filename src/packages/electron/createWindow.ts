@@ -65,7 +65,7 @@ export function createWindow(options: CreateWindowOptions) {
 
     // 热模块替换(HMR)相关配置，根据环境加载远程URL或本地HTML文件。
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      window.loadURL(process.env["ELECTRON_RENDERER_URL"] + ("/" + options.html).repeat(2))
+      window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}${("/" + options.html).repeat(2)}.html`)
     } else {
       window.loadFile(join(__dirname, `../renderer/${options.html}/${options.html}.html`))
     }

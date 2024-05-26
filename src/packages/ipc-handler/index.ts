@@ -1,5 +1,5 @@
 import type { InvokeChannelMap } from "@packages/exposed"
-import { BrowserWindow, dialog, ipcMain } from "electron"
+import { BrowserWindow, dialog, ipcMain, type OpenDialogOptions, shell } from "electron"
 import { channels, Handler } from "./handler.ts"
 import "./photo.ts"
 
@@ -31,6 +31,16 @@ export class IpcHandler {
   }
 
   /**
+   * 处理器函数，用于在文件夹中显示指定的项目。
+   * @param path 项目文件的路径，必须为字符串格式。
+   * 该函数没有返回值。
+   */
+  @Handler("showItemInFolder") showItemInFolder(path: string) {
+    // 使用shell对象显示指定路径的文件夹中的项目
+    shell.showItemInFolder(path)
+  }
+
+  /**
    * 处理 `showSaveDialog` 频道的IPC事件，用于显示保存对话框。
    * @param args - 传递给 `showSaveDialog` 方法的参数，第一个参数为对话框选项。
    * @returns 返回一个承诺，解析为 `dialog.showSaveDialog` 方法的返回值（文件路径）。
@@ -42,6 +52,18 @@ export class IpcHandler {
     const option = args[0] // 提取对话框选项。
     const result = await dialog.showSaveDialog(option) // 显示保存对话框并等待结果。
     return result.filePath // 返回文件路径。
+  }
+
+  /**
+   * 处理并显示打开文件对话框的请求。
+   * @param option 包含打开对话框的配置选项，如初始路径、文件类型等。
+   * @returns 返回一个Promise，该Promise解析为用户选择的文件路径数组。
+   */
+  @Handler("showOpenDialog") async showOpenDialog(option: OpenDialogOptions) {
+    // 使用dialog模块显示打开文件的对话框，并等待用户进行选择
+    const result = await dialog.showOpenDialog(option)
+    // 返回用户选择的文件路径数组
+    return result.filePaths
   }
 
   /**

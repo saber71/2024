@@ -2,7 +2,7 @@ import { Collection } from "@packages/collection"
 import { createWindow, getImageInfo, type ImageInfo, sendToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
 import { Handler } from "@packages/ipc-handler/handler.ts"
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, dialog } from "electron"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
 import { join } from "path"
@@ -33,6 +33,16 @@ export interface PhotoInvokeChannelMap {
   "photo:open": {
     args: []
     return: void
+  }
+
+  /**
+   * 打开系统对话框选择目录
+   * 无参数
+   * 无返回值
+   */
+  "photo:selectDirectory": {
+    args: [] // 参数列表为空
+    return: { dir: Directory; thumbnail: string } | undefined // 选中的目录对象和缩略图，如果未选中则返回undefined
   }
 
   /**
@@ -112,14 +122,15 @@ export class Photo {
    * 打开一个照片窗口。
    */
   @Handler("photo:open") open() {
-    createWindow({ html: "photo", frame: false, maximize: true })
+    createWindow({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 })
   }
 
   /**
    * 添加一个图片目录。
    * @param directories 图片目录的路径。
    */
-  @Handler("photo:updateDirectories") async updateDirectories(directories: Directory[]) {
+  @Handler("photo:updateDirectories")
+  async updateDirectories(directories: Directory[]) {
     await this.collection.save<Directories>({
       _id: ALL_DIRECTORIES,
       array: directories
@@ -127,10 +138,34 @@ export class Photo {
   }
 
   /**
+   * 处理选择目录的请求。
+   * 该函数通过一个对话框让用户选择一个目录，然后返回该目录的信息
+   */
+  @Handler("photo:selectDirectory")
+  async selectDirectory(): Promise<PhotoInvokeChannelMap["photo:selectDirectory"]["return"]> {
+    // 显示一个打开目录的对话框，并等待用户选择。
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory"]
+    })
+
+    // 如果用户选择了目录，则处理选择的目录。
+    if (result.filePaths.length) {
+      // 创建一个包含目录路径和名称的对象。
+      const dir: Directory = {
+        path: result.filePaths[0],
+        name: basename(result.filePaths[0])
+      }
+      const thumbnails = await this.getDirectoryThumbnail([dir])
+      return { dir, thumbnail: thumbnails[0] }
+    }
+  }
+
+  /**
    * 获取所有图片目录。
    * @returns 返回目录列表。
    */
-  @Handler("photo:allDirectories") async allDirectories() {
+  @Handler("photo:allDirectories")
+  async allDirectories() {
     let data = await this.collection.getById<Directories>(ALL_DIRECTORIES)
     if (!data) {
       // 如果记录不存在，则创建一个包含图片路径的记录。
@@ -150,7 +185,8 @@ export class Photo {
    * @param directories 目录列表。
    * @param windowId 窗口ID。
    */
-  @Handler("photo:readImages") async allImage(directories: Directory[], windowId: number) {
+  @Handler("photo:readImages")
+  async allImage(directories: Directory[], windowId: number) {
     // 并行读取所有目录中的图片文件，然后发送图片信息到指定窗口。
     const result = (await getDirectoryImagePaths(directories)).flat()
     sendImageInfos(windowId, result)
@@ -162,7 +198,8 @@ export class Photo {
    * @returns 返回一个Promise，该Promise解析为一个字符串数组，包含目录中图片的路径。
    *          如果目录中没有图片，则对应位置返回空字符串。
    */
-  @Handler("photo:getDirectoryThumbnail") async getDirectoryThumbnail(directories: Directory[]) {
+  @Handler("photo:getDirectoryThumbnail")
+  async getDirectoryThumbnail(directories: Directory[]) {
     // 获取目录中所有图片的路径
     const imagePaths = await getDirectoryImagePaths(directories)
     return Promise.all(

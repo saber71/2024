@@ -318,6 +318,13 @@ export function BindThis() {
   }
 }
 
+export function Setup() {
+  return (target: object, arg: any) => {
+    // 获取或创建目标对象与参数对应的元数据，并将当前方法的名称加入到setup数组中
+    getOrCreateMetadata(target, arg).setup.push(getName(arg))
+  }
+}
+
 /**
  * 生成一个用于监听事件的装饰器。
  * @param eventTarget 事件的目标对象，比如window或者document。
