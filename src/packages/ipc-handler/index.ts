@@ -97,4 +97,14 @@ export class IpcHandler {
   @Handler("window:close") windowClose(id: number) {
     BrowserWindow.fromId(id)?.close() // 尝试关闭指定ID的窗口。
   }
+
+  /**
+   * 处理查询窗口是否最大化的方法。
+   * @param id 窗口的ID，用于标识要查询的浏览器窗口。
+   * @returns 返回一个布尔值，如果窗口被最大化，则为true；否则为false。
+   */
+  @Handler("window:isMaximized") getWindowIsMaximized(id: number) {
+    // 通过窗口ID查询浏览器窗口，并检查该窗口是否被最大化。
+    return BrowserWindow.fromId(id)?.isMaximized() ?? false
+  }
 }

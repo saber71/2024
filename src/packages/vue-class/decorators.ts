@@ -1,5 +1,5 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
-import type { debounce, throttle } from "throttle-debounce"
+import type { debounce } from "lodash"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
@@ -62,7 +62,8 @@ export function Service(option?: Parameters<typeof Injectable>[0]) {
       {
         moduleName: ModuleName, // 默认模块名
         singleton: true, // 默认为单例模式
-        onCreate: (instance: object) => applyMetadata(instance.constructor, instance) // 创建实例时应用元数据
+        onCreate: (instance: object) => applyMetadata(instance.constructor, instance), // 创建实例时应用元数据
+        createImmediately: true
       },
       option // 合并用户自定义的配置
     )
@@ -344,34 +345,28 @@ export function EventListener(eventTarget: EventTarget, eventName: keyof WindowE
 
 /**
  * Throttle装饰器：为方法添加节流逻辑。
- * @param option 节流配置对象，可选参数。
- * - delay 延迟时间，默认为100ms。
- * - options 调用throttle函数时的其他选项。
  * @returns 返回一个函数，该函数用于修饰目标对象的方法。
  */
-export function Throttle(option?: { delay?: number; options?: Parameters<typeof throttle>[2] }) {
+export function Throttle(delay?: number) {
   return (target: object, arg: any) => {
     // 为方法添加节流配置到元数据中
     getOrCreateMetadata(target, arg).throttles.push({
       methodName: getName(arg),
-      args: [option?.delay ?? 100, option]
+      args: [delay ?? 100]
     })
   }
 }
 
 /**
  * Debounce装饰器：为方法添加防抖逻辑。
- * @param option 防抖配置对象，可选参数。
- * - delay 延迟时间，默认为100ms。
- * - options 调用debounce函数时的其他选项。
  * @returns 返回一个函数，该函数用于修饰目标对象的方法。
  */
-export function Debounce(option?: { delay?: number; options?: Parameters<typeof debounce>[2] }) {
+export function Debounce(delay?: number, options?: Parameters<typeof debounce>[2]) {
   return (target: object, arg: any) => {
     // 为方法添加防抖配置到元数据中
     getOrCreateMetadata(target, arg).debounce.push({
       methodName: getName(arg),
-      args: [option?.delay ?? 100, option]
+      args: [delay ?? 100, options]
     })
   }
 }

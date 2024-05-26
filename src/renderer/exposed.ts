@@ -44,7 +44,15 @@ function hook<Channel extends keyof SendChannelMap, Value extends SendChannelMap
   initValue: Value
 ): Ref<UnwrapRef<Value>> {
   const result = ref(initValue)
-  listenIpcRenderer(eventName, (value: any) => (result.value = value))
+  let gotIt = false
+  listenIpcRenderer(eventName, (value: any) => {
+    result.value = value
+    gotIt = true
+  })
+  if (eventName === "window:isMaximized")
+    invoke("window:isMaximized").then((val) => {
+      if (!gotIt) result.value = val as any
+    })
   return result
 }
 

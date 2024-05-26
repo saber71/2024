@@ -1,5 +1,5 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
-import { debounce, throttle } from "throttle-debounce"
+import { debounce } from "lodash"
 import {
   computed,
   inject,
@@ -26,7 +26,7 @@ import {
 } from "vue"
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
-import { deepClone } from "../common"
+import { deepClone, throttle } from "../common"
 import type { HookType, WatcherTarget } from "./decorators"
 import { VueComponent } from "./vue-component"
 import { VueDirective } from "./vue-directive"
@@ -167,16 +167,14 @@ export class VueClassMetadata {
   handleDebounce(instance: any) {
     for (let item of this.debounce) {
       const method = instance[item.methodName].bind(instance)
-      instance[item.methodName] = method
-      debounce(item.args[0], method, item.args[1])
+      instance[item.methodName] = debounce(method, item.args[0], item.args[1])
     }
   }
 
   handleThrottle(instance: any) {
     for (let item of this.throttles) {
       const method = instance[item.methodName].bind(instance)
-      instance[item.methodName] = method
-      throttle(item.args[0], method, item.args[1])
+      instance[item.methodName] = throttle(method, item.args[0])
     }
   }
 
@@ -421,14 +419,14 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleMut(instance)
   metadata.handleReadonly(instance)
   metadata.handleVueInject(instance)
+  metadata.handleDebounce(instance)
+  metadata.handleThrottle(instance)
   metadata.handleComputer(instance)
   metadata.handleWatchers(instance)
   metadata.handleBindThis(instance)
   metadata.handleIpcListener(instance)
   metadata.handleInvokes(instance)
   metadata.handleEventListener(instance)
-  metadata.handleDebounce(instance)
-  metadata.handleThrottle(instance)
   metadata.handleIpcReceived(instance)
   metadata.handleIpcSync(instance)
   if (instance instanceof VueComponent) {

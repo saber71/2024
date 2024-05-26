@@ -8,8 +8,6 @@ import {
   onUnmounted,
   type VNodeChild
 } from "vue"
-import type { Router } from "vue-router"
-import { ROUTER } from "./constants"
 import { applyMetadata } from "./metadata"
 import type { ComponentProps, VueComponentClass, WithSlotTypes } from "./types"
 import { VueClass } from "./vue-class"
@@ -49,14 +47,6 @@ export class VueComponent<
 
   get slot() {
     return this.vueInstance.slots ?? {}
-  }
-
-  get router(): Router {
-    return VueClass.getContainer().getValue(ROUTER)
-  }
-
-  get route() {
-    return this.router.currentRoute.value
   }
 
   render(): VNodeChild {}

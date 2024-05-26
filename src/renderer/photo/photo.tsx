@@ -18,8 +18,10 @@ import TitleBar from "@renderer/components/title-bar"
 import { invoke } from "@renderer/exposed.ts"
 import { PhotoDataService } from "@renderer/photo/data.service.ts"
 import DirectoryManager from "@renderer/photo/directory-manager"
+import ImgList from "@renderer/photo/img-list"
 import { Button, Dropdown, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
+import type { MenuInfo } from "ant-design-vue/es/menu/src/interface"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
 import icon from "./assets/icon.svg"
@@ -32,7 +34,6 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   static readonly defineProps: ComponentProps<PhotoProps> = ["inst"]
 
   @Inject() dataService: PhotoDataService
-  @Mut() selectedKeys: Key[] = ["all-images"]
   @Mut() openKeys: Key[] = []
   @Mut() collapsed = false
   @Mut() isStretching = false
@@ -41,8 +42,8 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   stretchLineDownPos?: MouseEvent
 
   @Watcher() toReadImageInfos() {
-    this.dataService.imageInfos.length = 0
-    const key = this.selectedKeys[0]
+    this.dataService.imageInfos = []
+    const key = this.dataService.selectedKeys[0]
     if (key === "all-images") {
       invoke("photo:readImages", this.dataService.allDirectories)
       this.dataService.curDirectory = undefined
@@ -86,6 +87,17 @@ export class PhotoInst extends VueComponent<PhotoProps> {
     this.stretchLineDownPos = e
   }
 
+  @BindThis() handleToDirectoryManager() {
+    this.dataService.curItemType = this.dataService.asideMenu[2] as any
+    this.dataService.selectedKeys = ["directories"]
+    this.router.push({ name: DirectoryManager.name })
+  }
+
+  @BindThis() handleClickMenuItem(val: MenuInfo) {
+    this.dataService.curItemType = val.item.originItemValue as any
+    this.router.push({ name: ImgList.name })
+  }
+
   render(): VNodeChild {
     const curDirectory = this.dataService.curDirectory
     const imageInfos = this.dataService.imageInfos
@@ -118,24 +130,19 @@ export class PhotoInst extends VueComponent<PhotoProps> {
             </Button>
 
             {/*跳转文件夹管理页面*/}
-            <Button
-              block
-              type={"dashed"}
-              icon={<AppstoreAddOutlined />}
-              onClick={() => this.router.push({ name: DirectoryManager.name })}
-            >
+            <Button block type={"dashed"} icon={<AppstoreAddOutlined />} onClick={this.handleToDirectoryManager}>
               {this.collapsed || (this.asideWidth <= 130 && this.asideWidth >= 0) ? null : "管理文件夹"}
             </Button>
 
             {/*菜单*/}
             <Menu
               items={this.dataService.asideMenu}
-              selectedKeys={this.selectedKeys}
+              selectedKeys={this.dataService.selectedKeys}
               openKeys={this.openKeys}
               inlineCollapsed={this.collapsed || (this.asideWidth <= 90 && this.asideWidth >= 0)}
               mode={"inline"}
-              onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
-              onClick={(val) => (this.dataService.curItemType = val.item.originItemValue as any)}
+              onUpdate:selectedKeys={(val) => (this.dataService.selectedKeys = val)}
+              onClick={this.handleClickMenuItem}
               style={{ border: "0" }}
             />
 

@@ -30,6 +30,10 @@ export interface InvokeChannelMap extends PhotoInvokeChannelMap {
     args: []
     return: number
   }
+  "window:isMaximized": {
+    args: []
+    return: boolean
+  }
   "window:maximize": {
     args: []
     return: void
