@@ -48,6 +48,8 @@
     "electron": "^30.0.8",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.2.0",
+    "overlayscrollbars": "^2.8.3",
+    "overlayscrollbars-vue": "^0.5.9",
     "postcss": "^8.4.38",
     "prettier": "^3.2.5",
     "sass": "^1.77.2",

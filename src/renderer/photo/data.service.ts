@@ -6,6 +6,7 @@ import { Invoke, IpcReceived, IpcSync, Mut, Service, VueService, Watcher } from 
 import { invoke } from "@renderer/exposed.ts"
 import { type ItemType, Modal } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
+import type { OverlayScrollbars } from "overlayscrollbars"
 import { h, type VNode } from "vue"
 
 /**
@@ -122,6 +123,10 @@ export class PhotoDataService extends VueService {
 
   // 左侧菜单的选中项key
   @Mut() selectedKeys: Key[] = ["all-images"]
+
+  scrollbarInstance?: OverlayScrollbars
+
+  readonly routeViewScrollListeners: Array<() => void> = []
 
   /**
    * 根据设定的排序规则对图片信息进行排序。

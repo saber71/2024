@@ -38,6 +38,9 @@ export function createWindow(options: CreateWindowOptions) {
     // 通过ipc事件向页面发送其所属窗口id
     window.webContents.ipc.handle("window:id", () => window.id)
 
+    // 当浏览器窗口大小发生改变时，会将当前窗口的大小信息发送到渲染进程
+    window.on("resize", () => sendToWeb(window, "window:size", window.getSize() as any))
+
     // 监听窗口的最大化和取消最大化事件，向渲染进程发送当前状态。
     window.on("maximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
     window.on("unmaximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))

@@ -22,6 +22,7 @@ import ImgList from "@renderer/photo/img-list"
 import { Button, Dropdown, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import type { MenuInfo } from "ant-design-vue/es/menu/src/interface"
+import { OverlayScrollbarsComponent } from "overlayscrollbars-vue"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
 import icon from "./assets/icon.svg"
@@ -96,6 +97,11 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   @BindThis() handleClickMenuItem(val: MenuInfo) {
     this.dataService.curItemType = val.item.originItemValue as any
     this.router.push({ name: ImgList.name })
+  }
+
+  @BindThis() handleScroll(instance: any) {
+    this.dataService.scrollbarInstance = instance
+    this.dataService.routeViewScrollListeners.forEach((fn) => fn())
   }
 
   render(): VNodeChild {
@@ -185,9 +191,16 @@ export class PhotoInst extends VueComponent<PhotoProps> {
               </Flex>
 
               {/*路由页面*/}
-              <div class={"overflow-auto"} style={{ height: "calc(100% - 100px)" }}>
+              <OverlayScrollbarsComponent
+                options={{ scrollbars: { theme: "os-theme-light scrollbar-theme-light" } }}
+                events={{
+                  scroll: this.handleScroll,
+                  initialized: (instance) => (this.dataService.scrollbarInstance = instance)
+                }}
+                style={{ height: "calc(100% - 100px)" }}
+              >
                 <RouterView />
-              </div>
+              </OverlayScrollbarsComponent>
             </div>
           </div>
         </Flex>

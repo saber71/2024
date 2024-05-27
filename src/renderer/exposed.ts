@@ -64,7 +64,8 @@ export const windowInfo = Object.freeze({
   isShow: hook("window:isShow", true),
   isMaximize: hook("window:isMaximized", false),
   isFocus: hook("window:isFocus", false),
-  id: windowIdPromise
+  id: windowIdPromise,
+  size: hook("window:size", [0, 0])
 })
 
 /**

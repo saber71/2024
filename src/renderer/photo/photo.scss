@@ -1,3 +1,9 @@
 .directory-contextmenu-remove {
   color: red !important;
 }
+
+.scrollbar-theme-light {
+  --os-handle-bg: rgba(105, 145, 175, 0.44) !important;
+  --os-handle-bg-hover: rgba(105, 145, 175, 0.75) !important;
+  --os-handle-bg-active: rgba(105, 145, 175, 0.96) !important;
+}
