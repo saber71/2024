@@ -1,0 +1,23 @@
+.picture {
+  border-color: transparent;
+  border-radius: 4px;
+  overflow: hidden;
+
+  &:after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    transition: all 0.2s;
+  }
+  &:hover:after {
+    background: rgba(0, 0, 0, 0.25);
+  }
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.25);
+  }
+}

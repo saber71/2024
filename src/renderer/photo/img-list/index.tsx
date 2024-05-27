@@ -5,6 +5,7 @@ import {
   BindThis,
   Component,
   type ComponentProps,
+  Disposable,
   Link,
   Mut,
   Throttle,
@@ -36,8 +37,6 @@ export interface RowPicture {
 
 export interface ImgListProps extends VueComponentBaseProps {}
 
-const GAP = 50
-
 @Component()
 export class ImgListInst extends VueComponent<ImgListProps> {
   static readonly defineProps: ComponentProps<ImgListProps> = ["inst"]
@@ -46,11 +45,19 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Link() imgContainerEl: HTMLElement
   @Mut() rowPictures: RowPicture[] = []
   @Mut() rowHeight = 200
+  @Mut() gap = 50
   @Mut() visibleStartRowIndex = 0
   @Mut() visibleEndRowIndex = 0
+  @Mut() selectedImageInfoPath = new Set<string>()
+  @Disposable("disconnect") resizeObserver: ResizeObserver
 
   setup() {
     this.dataService.routeViewScrollListeners.push(this.handleScroll)
+  }
+
+  onMounted() {
+    this.resizeObserver = new ResizeObserver(this.updateRowPictures)
+    this.resizeObserver.observe(this.imgContainerEl, { box: "border-box" })
   }
 
   onBeforeUnmounted() {
@@ -61,18 +68,19 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     const rowHeight = this.rowHeight
     const scrollbar = this.dataService.scrollbarInstance
     const rowPictureLength = this.rowPictures.length
+    const gap = this.gap
     if (!scrollbar) return
     const el = scrollbar.elements().viewport
     const scrollTop = el.scrollTop
     const viewportHeight = el.getBoundingClientRect().height
-    this.visibleStartRowIndex = Math.floor(scrollTop / (rowHeight + GAP))
+    this.visibleStartRowIndex = Math.floor(scrollTop / (rowHeight + gap))
     this.visibleEndRowIndex = Math.min(
-      Math.ceil((scrollTop + viewportHeight) / (rowHeight + GAP)),
+      Math.ceil((scrollTop + viewportHeight) / (rowHeight + gap)),
       rowPictureLength - 1
     )
   }
 
-  @Watcher() updateRowPictures() {
+  @BindThis() @Watcher() updateRowPictures() {
     let size = 200
     if (this.dataService.imageShowSetting.size === "small") size = 100
     else if (this.dataService.imageShowSetting.size === "big") size = 400
@@ -90,6 +98,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Throttle()
   updateRowPicturesImpl(type: "rect" | "same-height", size: number) {
     const containerSize = this.imgContainerEl.getBoundingClientRect()
+    const containerWidth = containerSize.width - 16
     const newRow = () => {
       accWidth = 0
       row = {
@@ -108,29 +117,28 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     rows.push(row)
     let accWidth = 0
     for (let info of this.dataService.imageInfos) {
-      if (accWidth > containerSize.width) newRow()
+      if (accWidth > containerWidth) newRow()
       const picture = toPicture(info)
       if (row.array.length === 0) {
         row.array.push(picture)
-        accWidth += picture.width + GAP
+        accWidth += picture.width + this.gap
       } else {
-        if (accWidth + picture.width <= containerSize.width) {
+        if (accWidth + picture.width <= containerWidth) {
           row.array.push(picture)
-          accWidth += picture.width + GAP
+          accWidth += picture.width + this.gap
         } else {
           row.complete = true
           newRow()
           row.array.push(picture)
-          accWidth += picture.width + GAP
+          accWidth += picture.width + this.gap
         }
       }
     }
     if (row.array.length === 0) rows.pop()
     this.rowPictures = rows
 
-    function toPicture(info: ImageInfo) {
-      let width = 0,
-        height = 0
+    function toPicture(info: ImageInfo): Picture {
+      let width: number, height: number
       if (type === "same-height") {
         height = size
         width = (info.width / info.height) * size
@@ -145,33 +153,47 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     }
   }
 
+  @BindThis() selectPicture(pic: Picture) {
+    if (this.selectedImageInfoPath.has(pic.info.path)) this.selectedImageInfoPath.delete(pic.info.path)
+    else this.selectedImageInfoPath.add(pic.info.path)
+  }
+
   render(): VNodeChild {
     return (
       <div
         ref={"imgContainerEl"}
         class={"relative"}
-        style={{ height: (GAP + this.rowHeight) * this.rowPictures.length + "px" }}
+        style={{ height: (this.gap + this.rowHeight) * this.rowPictures.length + "px" }}
       >
         {spread(this.visibleStartRowIndex, this.visibleEndRowIndex, (index) => {
           if (index >= this.rowPictures.length) return null
           const row = this.rowPictures[index]
           return (
             <Flex
-              class={"absolute left-0 w-full"}
-              gap={GAP}
+              class={"absolute left-2"}
+              gap={this.gap}
               align={"center"}
-              style={{ top: (GAP + this.rowHeight) * index + "px" }}
+              style={{ top: (this.gap + this.rowHeight) * index + 8 + "px", width: "calc(100% - 16px)" }}
             >
               {row.array.map((pic) => (
                 <div
-                  class={"bg-gray-100"}
-                  style={{ width: pic.width + "px", height: pic.height + "px", flexGrow: row.complete ? "1" : "0" }}
+                  class={
+                    "picture relative bg-gray-100 flex-shrink-0 box-shadow-hover transition border-2 border-solid box-border"
+                  }
+                  style={{
+                    width: pic.width + "px",
+                    height: pic.height + "px",
+                    flexGrow: row.complete ? "1" : "0",
+                    borderColor: this.selectedImageInfoPath.has(pic.info.path) ? "#334477" : ""
+                  }}
+                  onClick={() => this.selectPicture(pic)}
                 >
                   <img
                     class={"block object-cover object-center"}
                     src={pic.info.path}
                     style={{ width: "100%", height: pic.height + "px" }}
                     loading={"lazy"}
+                    title={pic.info.name}
                   />
                 </div>
               ))}

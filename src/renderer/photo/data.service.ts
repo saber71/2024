@@ -124,8 +124,10 @@ export class PhotoDataService extends VueService {
   // 左侧菜单的选中项key
   @Mut() selectedKeys: Key[] = ["all-images"]
 
+  // OverlayScrollbars instance
   scrollbarInstance?: OverlayScrollbars
 
+  // OverlayScrollbars scroll listeners
   readonly routeViewScrollListeners: Array<() => void> = []
 
   /**

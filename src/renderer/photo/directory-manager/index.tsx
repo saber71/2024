@@ -14,7 +14,7 @@ import { invoke } from "@renderer/exposed.ts"
 import { PhotoDataService } from "@renderer/photo/data.service.ts"
 import { Flex } from "ant-design-vue"
 import type { VNodeChild } from "vue"
-import "./idex.scss"
+import "./index.scss"
 import directoryImg from "../assets/directory.svg"
 
 export interface DirectoryManagerProps extends VueComponentBaseProps {}
