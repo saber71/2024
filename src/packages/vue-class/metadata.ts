@@ -1,5 +1,4 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
-import { debounce } from "lodash"
 import {
   computed,
   inject,
@@ -26,7 +25,7 @@ import {
 } from "vue"
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
-import { deepClone, throttle } from "../common"
+import { debounce, deepClone, throttle } from "../common"
 import type { HookType, WatcherTarget } from "./decorators"
 import { VueComponent } from "./vue-component"
 import { VueDirective } from "./vue-directive"
@@ -167,7 +166,7 @@ export class VueClassMetadata {
   handleDebounce(instance: any) {
     for (let item of this.debounce) {
       const method = instance[item.methodName].bind(instance)
-      instance[item.methodName] = debounce(method, item.args[0], item.args[1])
+      instance[item.methodName] = debounce(method, item.args[0])
     }
   }
 

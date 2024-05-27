@@ -1,5 +1,4 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
-import type { debounce } from "lodash"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
@@ -361,12 +360,12 @@ export function Throttle(delay?: number) {
  * Debounce装饰器：为方法添加防抖逻辑。
  * @returns 返回一个函数，该函数用于修饰目标对象的方法。
  */
-export function Debounce(delay?: number, options?: Parameters<typeof debounce>[2]) {
+export function Debounce(delay?: number) {
   return (target: object, arg: any) => {
     // 为方法添加防抖配置到元数据中
     getOrCreateMetadata(target, arg).debounce.push({
       methodName: getName(arg),
-      args: [delay ?? 100, options]
+      args: [delay ?? 100]
     })
   }
 }
