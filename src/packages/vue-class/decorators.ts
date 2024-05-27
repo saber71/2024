@@ -1,4 +1,5 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
+import type EventEmitter from "eventemitter3"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
@@ -331,12 +332,15 @@ export function Setup() {
  * @param eventName 要监听的事件名称，必须是WindowEventMap中定义的事件名。
  * @returns 返回一个函数，该函数接收两个参数：target和arg。target是应用装饰器的对象，arg是装饰的方法。
  */
-export function EventListener(eventTarget: EventTarget, eventName: keyof WindowEventMap) {
+export function EventListener<Events extends EventEmitter.ValidEventTypes>(
+  eventTarget: EventTarget | EventEmitter<Events>,
+  eventName: keyof WindowEventMap | keyof Events
+) {
   return (target: object, arg: any) => {
     // 为指定的方法添加事件监听信息到metadata中
     getOrCreateMetadata(target, arg).eventListener.push({
       methodName: getName(arg), // 获取方法名
-      eventName, // 事件名称
+      eventName: eventName as any, // 事件名称
       eventTarget // 事件目标
     })
   }

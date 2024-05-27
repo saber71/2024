@@ -1,4 +1,5 @@
 import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
+import EventEmitter from "eventemitter3"
 import {
   computed,
   inject,
@@ -26,7 +27,7 @@ import {
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
 import { debounce, deepClone, throttle } from "../common"
-import type { HookType, WatcherTarget } from "./decorators"
+import { type HookType, type WatcherTarget } from "./decorators"
 import { VueComponent } from "./vue-component"
 import { VueDirective } from "./vue-directive"
 import { VueService } from "./vue-service"
@@ -99,7 +100,11 @@ export class VueClassMetadata {
 
   readonly setup: string[] = []
 
-  readonly eventListener: Array<{ eventTarget: EventTarget; eventName: string; methodName: string }> = []
+  readonly eventListener: Array<{
+    eventTarget: EventTarget | EventEmitter<any>
+    eventName: string
+    methodName: string
+  }> = []
 
   readonly hooks: { methodName: string; type: HookType }[] = []
 
@@ -180,7 +185,8 @@ export class VueClassMetadata {
   handleEventListener(instance: object) {
     for (let item of this.eventListener) {
       const method = (instance as any)[item.methodName].bind(instance)
-      item.eventTarget.addEventListener(item.eventName, method)
+      if (item.eventTarget instanceof EventEmitter) item.eventTarget.on(item.eventName, method)
+      else item.eventTarget.addEventListener(item.eventName, method)
     }
   }
 

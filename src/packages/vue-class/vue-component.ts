@@ -1,3 +1,4 @@
+import EventEmitter from "eventemitter3"
 import {
   defineComponent,
   type EmitsOptions,
@@ -90,7 +91,9 @@ export function toNative<Props extends VueComponentBaseProps, Emit extends Emits
           ;(instance as any)["$off_" + item.methodName]?.()
         })
         for (let item of metadata.eventListener) {
-          item.eventTarget.removeEventListener(item.eventName, (instance as any)[item.methodName])
+          if (item.eventTarget instanceof EventEmitter)
+            item.eventTarget.off(item.eventName, (instance as any)[item.methodName])
+          else item.eventTarget.removeEventListener(item.eventName, (instance as any)[item.methodName])
         }
         for (let item of metadata.ipcReceived) {
           ;(instance as any)["$__" + item.channel + "_" + item.propName]?.()

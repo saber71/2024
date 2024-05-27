@@ -1,4 +1,5 @@
 import { Collection } from "@packages/collection"
+import { isImageExtName, isVideoExtName } from "@packages/common"
 import { createWindow, getImageInfo, type ImageInfo, sendToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
 import { Handler } from "@packages/ipc-handler/handler.ts"
@@ -106,7 +107,6 @@ export interface PhotoSendChannelMap {
 }
 
 const ALL_DIRECTORIES = "all_directories"
-const validExtNames = new Set(["jpeg", "jpg", "png", "bmp", "mp4"])
 
 // 从集合中获取或创建包含所有目录的记录，并返回目录数组。
 interface Directories extends FilterItem {
@@ -228,7 +228,7 @@ function getDirectoryImagePaths(directories: Directory[]) {
           .filter((path) => {
             // 过滤条件：仅保留有效的图片文件扩展名。
             const extName = extname(path).toLowerCase().slice(1)
-            return validExtNames.has(extName)
+            return isImageExtName(extName) || isVideoExtName(extName)
           })
           .map((path) => join(directory.path, path))
       )

@@ -2,12 +2,25 @@ import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/i
 import { remove } from "@packages/common"
 import type { ImageInfo } from "@packages/electron"
 import type { Directory } from "@packages/ipc-handler/photo.ts"
-import { Invoke, IpcReceived, IpcSync, Mut, Service, VueService, Watcher } from "@packages/vue-class"
+import { Invoke, IpcReceived, IpcSync, Mut, Service, Throttle, VueService, Watcher } from "@packages/vue-class"
 import { invoke } from "@renderer/exposed.ts"
 import { type ItemType, Modal } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
+import EventEmitter from "eventemitter3"
 import type { OverlayScrollbars } from "overlayscrollbars"
 import { h, type VNode } from "vue"
+
+type SortOrder = "birthtimeMs" | "mtimeMs" | "name"
+type ShowType = "rect" | "same-height"
+type ShowSize = "small" | "medium" | "big"
+export type FilterType = "all" | "image" | "video"
+
+export const photoEventBus = new EventEmitter<{
+  scroll: () => void
+  selectAll: () => void
+  unselectAll: () => void
+  updateRows: () => void
+}>()
 
 /**
  * PhotoDataService 类提供与照片数据相关的服务，
@@ -88,15 +101,16 @@ export class PhotoDataService extends VueService {
   imageInfos: ImageInfo[] = []
 
   // 图片的排序规则
-  @Mut() imageSortRule: { order: "birthtimeMs" | "mtimeMs" | "name"; asc: boolean } = {
+  @Mut() imageSortRule: { order: SortOrder; asc: boolean } = {
     order: "birthtimeMs", //排序根据
-    asc: true //是否升序
+    asc: false //是否升序
   }
 
   // 图片的显示配置
-  @Mut() imageShowSetting: { type: "rect" | "same-height"; size: "small" | "medium" | "big" } = {
+  @Mut() imageShowSetting: { type: ShowType; size: ShowSize; filter: FilterType } = {
     type: "same-height",
-    size: "big"
+    size: "big",
+    filter: "all"
   }
 
   // 菜单项列表，存储应用中的菜单项信息。包括所有图片、收藏夹和文件夹等菜单。
@@ -127,26 +141,17 @@ export class PhotoDataService extends VueService {
   // OverlayScrollbars instance
   scrollbarInstance?: OverlayScrollbars
 
-  // OverlayScrollbars scroll listeners
-  readonly routeViewScrollListeners: Array<() => void> = []
-
   /**
    * 根据设定的排序规则对图片信息进行排序。
    * 此方法为响应式，当排序规则发生变化时会被自动调用。
    * 无显式返回值，但会修改类成员变量`imageInfos`的顺序。
    */
   @Watcher() sortImageInfos() {
+    if (!this.imageInfos.length) return
     // 获取当前的排序规则
     const order = this.imageSortRule.order
-    this.imageInfos.sort((a, b) => {
-      let result = 0
-      // 根据排序字段进行比较
-      if (order === "name") result = a.name.localeCompare(b.name)
-      else result = a[order] - b[order]
-      // 如果为降序，则反转结果
-      if (!this.imageSortRule.asc) result *= -1
-      return result
-    })
+    const asc = this.imageSortRule.asc
+    this._sortImageInfosImpl(order, asc)
   }
 
   /**
@@ -159,6 +164,19 @@ export class PhotoDataService extends VueService {
 
   setup() {
     this.curItemType = this.asideMenu[0] as any
+  }
+
+  @Throttle() private _sortImageInfosImpl(order: SortOrder, asc: boolean) {
+    this.imageInfos.sort((a, b) => {
+      let result: number
+      // 根据排序字段进行比较
+      if (order === "name") result = a.name.localeCompare(b.name)
+      else result = a[order] - b[order]
+      // 如果为降序，则反转结果
+      if (!asc) result *= -1
+      return result
+    })
+    photoEventBus.emit("updateRows")
   }
 }
 

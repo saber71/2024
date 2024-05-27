@@ -1,4 +1,4 @@
-import { remove, spread } from "@packages/common"
+import { isImageExtName, isVideoExtName, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
 import type { ImageInfo } from "@packages/electron"
 import {
@@ -6,6 +6,7 @@ import {
   Component,
   type ComponentProps,
   Disposable,
+  EventListener,
   Link,
   Mut,
   Throttle,
@@ -14,7 +15,7 @@ import {
   type VueComponentBaseProps,
   Watcher
 } from "@packages/vue-class"
-import { PhotoDataService } from "@renderer/photo/data.service.ts"
+import { type FilterType, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.ts"
 import { Flex } from "ant-design-vue"
 import { type VNodeChild } from "vue"
 import "./index.scss"
@@ -50,21 +51,14 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Mut() visibleEndRowIndex = 0
   @Mut() selectedImageInfoPath = new Set<string>()
   @Disposable("disconnect") resizeObserver: ResizeObserver
-
-  setup() {
-    this.dataService.routeViewScrollListeners.push(this.handleScroll)
-  }
+  filterType: FilterType = "all"
 
   onMounted() {
     this.resizeObserver = new ResizeObserver(this.updateRowPictures)
     this.resizeObserver.observe(this.imgContainerEl, { box: "border-box" })
   }
 
-  onBeforeUnmounted() {
-    remove(this.dataService.routeViewScrollListeners, this.handleScroll, false)
-  }
-
-  @BindThis() @Watcher() handleScroll() {
+  @EventListener(photoEventBus, "scroll") @Watcher() handleScroll() {
     const rowHeight = this.rowHeight
     const scrollbar = this.dataService.scrollbarInstance
     const rowPictureLength = this.rowPictures.length
@@ -80,23 +74,25 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     )
   }
 
-  @BindThis() @Watcher() updateRowPictures() {
+  @BindThis() @Watcher() @EventListener(photoEventBus, "updateRows") updateRowPictures() {
+    this.filterType = this.dataService.imageShowSetting.filter
     let size = 200
     if (this.dataService.imageShowSetting.size === "small") size = 100
     else if (this.dataService.imageShowSetting.size === "big") size = 400
     this.rowHeight = size
-    const type = this.dataService.imageShowSetting.type
     const imageInfos = this.dataService.imageInfos
     // 这里必须要确保访问到imageInfos的属性，否则vue会监听不到
     if (!imageInfos.length || !this.imgContainerEl) {
       this.rowPictures = []
       return
     }
-    this.updateRowPicturesImpl(type, size)
+    this.updateRowPicturesImpl()
   }
 
   @Throttle()
-  updateRowPicturesImpl(type: "rect" | "same-height", size: number) {
+  updateRowPicturesImpl() {
+    const type = this.dataService.imageShowSetting.type
+    const size = this.rowHeight
     const containerSize = this.imgContainerEl.getBoundingClientRect()
     const containerWidth = containerSize.width - 16
     const newRow = () => {
@@ -117,6 +113,8 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     rows.push(row)
     let accWidth = 0
     for (let info of this.dataService.imageInfos) {
+      if (this.filterType === "image" && !isImageExtName(info.extName)) continue
+      if (this.filterType === "video" && !isVideoExtName(info.extName)) continue
       if (accWidth > containerWidth) newRow()
       const picture = toPicture(info)
       if (row.array.length === 0) {
@@ -183,7 +181,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                   style={{
                     width: pic.width + "px",
                     height: pic.height + "px",
-                    flexGrow: row.complete ? "1" : "0",
+                    flexGrow: row.complete && this.dataService.imageShowSetting.type !== "rect" ? "1" : "0",
                     borderColor: this.selectedImageInfoPath.has(pic.info.path) ? "#334477" : ""
                   }}
                   onClick={() => this.selectPicture(pic)}

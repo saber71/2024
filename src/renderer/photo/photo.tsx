@@ -16,9 +16,10 @@ import {
 } from "@packages/vue-class"
 import TitleBar from "@renderer/components/title-bar"
 import { invoke } from "@renderer/exposed.ts"
-import { PhotoDataService } from "@renderer/photo/data.service.ts"
+import { PhotoDataService, photoEventBus } from "@renderer/photo/data.service.ts"
 import DirectoryManager from "@renderer/photo/directory-manager"
 import ImgList from "@renderer/photo/img-list"
+import Toolbar from "@renderer/photo/toolbar"
 import { Button, Dropdown, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import type { MenuInfo } from "ant-design-vue/es/menu/src/interface"
@@ -101,7 +102,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
 
   @BindThis() handleScroll(instance: any) {
     this.dataService.scrollbarInstance = instance
-    this.dataService.routeViewScrollListeners.forEach((fn) => fn())
+    photoEventBus.emit("scroll")
   }
 
   render(): VNodeChild {
@@ -187,7 +188,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
                 </div>
 
                 {/*工具栏*/}
-                <div></div>
+                <Toolbar />
               </Flex>
 
               {/*路由页面*/}
