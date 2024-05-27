@@ -27,6 +27,10 @@ export interface InvokeChannelMap extends PhotoInvokeChannelMap {
     args: [string]
     return: string
   }
+  createDirectory: {
+    args: [string, string] // 参数[父路径，新目录名]
+    return: string // 如果创建成功返回新目录的完整路径，如果失败则返回空字符串
+  }
   "window:id": {
     args: []
     return: number

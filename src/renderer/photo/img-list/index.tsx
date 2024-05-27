@@ -15,8 +15,8 @@ import {
   type VueComponentBaseProps,
   Watcher
 } from "@packages/vue-class"
-import { type FilterType, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.ts"
-import { Flex } from "ant-design-vue"
+import { type FilterType, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
+import { Checkbox, Flex } from "ant-design-vue"
 import { type VNodeChild } from "vue"
 import "./index.scss"
 
@@ -49,7 +49,6 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Mut() gap = 50
   @Mut() visibleStartRowIndex = 0
   @Mut() visibleEndRowIndex = 0
-  @Mut() selectedImageInfoPath = new Set<string>()
   @Disposable("disconnect") resizeObserver: ResizeObserver
   filterType: FilterType = "all"
 
@@ -151,16 +150,16 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     }
   }
 
-  @BindThis() selectPicture(pic: Picture) {
-    if (this.selectedImageInfoPath.has(pic.info.path)) this.selectedImageInfoPath.delete(pic.info.path)
-    else this.selectedImageInfoPath.add(pic.info.path)
+  @BindThis() handleClickCheckbox(val: boolean, pic: Picture) {
+    if (!val) this.dataService.selectedImagePaths.delete(pic.info.path)
+    else this.dataService.selectImage(pic, true)
   }
 
   render(): VNodeChild {
     return (
       <div
         ref={"imgContainerEl"}
-        class={"relative"}
+        class={"img-list relative"}
         style={{ height: (this.gap + this.rowHeight) * this.rowPictures.length + "px" }}
       >
         {spread(this.visibleStartRowIndex, this.visibleEndRowIndex, (index) => {
@@ -173,28 +172,34 @@ export class ImgListInst extends VueComponent<ImgListProps> {
               align={"center"}
               style={{ top: (this.gap + this.rowHeight) * index + 8 + "px", width: "calc(100% - 16px)" }}
             >
-              {row.array.map((pic) => (
-                <div
-                  class={
-                    "picture relative bg-gray-100 flex-shrink-0 box-shadow-hover transition border-2 border-solid box-border"
-                  }
-                  style={{
-                    width: pic.width + "px",
-                    height: pic.height + "px",
-                    flexGrow: row.complete && this.dataService.imageShowSetting.type !== "rect" ? "1" : "0",
-                    borderColor: this.selectedImageInfoPath.has(pic.info.path) ? "#334477" : ""
-                  }}
-                  onClick={() => this.selectPicture(pic)}
-                >
-                  <img
-                    class={"block object-cover object-center"}
-                    src={pic.info.path}
-                    style={{ width: "100%", height: pic.height + "px" }}
-                    loading={"lazy"}
-                    title={pic.info.name}
-                  />
-                </div>
-              ))}
+              {row.array.map((pic) => {
+                const checked = this.dataService.selectedImagePaths.has(pic.info.path)
+                return (
+                  <div
+                    class={[
+                      "picture relative bg-gray-100 flex-shrink-0 box-shadow-hover transition box-border",
+                      checked ? "checked-picture" : ""
+                    ]}
+                    style={{
+                      width: pic.width + "px",
+                      height: pic.height + "px",
+                      flexGrow: row.complete && this.dataService.imageShowSetting.type !== "rect" ? "1" : "0"
+                    }}
+                    onClick={() => this.dataService.selectImage(pic)}
+                  >
+                    <img
+                      class={"block object-cover object-center"}
+                      src={pic.info.path}
+                      style={{ width: "100%", height: pic.height + "px" }}
+                      loading={"lazy"}
+                      title={pic.info.name}
+                    />
+                    <div class={["checkbox", checked ? "checked" : ""]} onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={checked} onUpdate:checked={(val) => this.handleClickCheckbox(val, pic)} />
+                    </div>
+                  </div>
+                )
+              })}
             </Flex>
           )
         })}

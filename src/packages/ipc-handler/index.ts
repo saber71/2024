@@ -1,5 +1,7 @@
 import type { InvokeChannelMap } from "@packages/exposed"
 import { BrowserWindow, dialog, ipcMain, type OpenDialogOptions, shell } from "electron"
+import { promises } from "node:fs"
+import { join } from "path"
 import { channels, Handler } from "./handler.ts"
 import "./photo.ts"
 
@@ -64,6 +66,25 @@ export class IpcHandler {
     const result = await dialog.showOpenDialog(option)
     // 返回用户选择的文件路径数组
     return result.filePaths
+  }
+
+  /**
+   * 创建一个新的目录。
+   *
+   * @param parentDirectory 指定新目录的父目录路径。
+   * @param newDirectoryName 指定要创建的新目录的名称。
+   * @returns 如果目录创建成功则返回新目录的完整路径，否则为空字符串。
+   */
+  @Handler("createDirectory") async createDirectory(parentDirectory: string, newDirectoryName: string) {
+    try {
+      const path = join(parentDirectory, newDirectoryName)
+      // 尝试使用 promises.mkdir 方法创建目录
+      await promises.mkdir(path)
+      return path
+    } catch {
+      // 如果创建目录过程中发生异常，则返回空字符串
+      return ""
+    }
   }
 
   /**

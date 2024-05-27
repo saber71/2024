@@ -25,19 +25,6 @@ export class IndexInst extends VueComponent<IndexProps> {
     invoke("photo:open")
   }
 
-  @BindThis()
-  async handleShowSaveDialog() {
-    const result = await invoke("showSaveDialog", {
-      filters: [
-        {
-          extensions: ["png"],
-          name: "image"
-        }
-      ]
-    })
-    console.log(result)
-  }
-
   render(): VNodeChild {
     return (
       <div>
@@ -63,16 +50,11 @@ export class IndexInst extends VueComponent<IndexProps> {
             <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
               Documentation
             </a>
-          </div>
-          <div class="action">
             <a target="_blank" rel="noreferrer" onClick={this.handlePing}>
               Send IPC
             </a>
             <a target="_blank" rel="noreferrer" onClick={this.handleOpenPhoto}>
               Open photo
-            </a>
-            <a target="_blank" onClick={this.handleShowSaveDialog}>
-              Show save dialog
             </a>
           </div>
         </div>

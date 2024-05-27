@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons-vue"
 import { Inject } from "@packages/dependency-injection"
 import { Component, type ComponentProps, toNative, VueComponent, type VueComponentBaseProps } from "@packages/vue-class"
-import { PhotoDataService, photoEventBus } from "@renderer/photo/data.service.ts"
+import { PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
 import { Button, Dropdown, Flex, Menu, MenuDivider, MenuItem } from "ant-design-vue"
 import type { VNodeChild } from "vue"
 

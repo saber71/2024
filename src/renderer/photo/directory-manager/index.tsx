@@ -11,7 +11,7 @@ import {
   type VueComponentBaseProps
 } from "@packages/vue-class"
 import { invoke } from "@renderer/exposed.ts"
-import { PhotoDataService } from "@renderer/photo/data.service.ts"
+import { PhotoDataService } from "@renderer/photo/data.service.tsx"
 import { Flex } from "ant-design-vue"
 import type { VNodeChild } from "vue"
 import "./index.scss"
@@ -41,19 +41,10 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
     this.dataService.curDirectory = dir
   }
 
-  @BindThis() async handleAddDirectory() {
-    const result = await invoke("photo:selectDirectory")
-    if (result) {
-      this.dataService.allDirectories.push(result.dir)
-      this.dataService.allDirectories = this.dataService.allDirectories.slice()
-      this.dataService.directoryThumbnails.push(result.thumbnail)
-    }
-  }
-
   render(): VNodeChild {
     return (
       <Flex gap={50} wrap={"wrap"} class={"pt-2 pl-2 pr-2 box-border"}>
-        <div class={"directory-item"} onClick={this.handleAddDirectory}>
+        <div class={"directory-item"} onClick={this.dataService.addDirectory}>
           <PlusCircleOutlined class={"add-icon"} />
           <span class={"add-text"}>添加文件夹</span>
         </div>

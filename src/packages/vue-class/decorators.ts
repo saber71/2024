@@ -328,12 +328,12 @@ export function Setup() {
 
 /**
  * 生成一个用于监听事件的装饰器。
- * @param eventTarget 事件的目标对象，比如window或者document。
+ * @param eventTarget 事件的目标对象，比如window或者document，也可以是EventEmitter对象，或是dom的类名。
  * @param eventName 要监听的事件名称，必须是WindowEventMap中定义的事件名。
  * @returns 返回一个函数，该函数接收两个参数：target和arg。target是应用装饰器的对象，arg是装饰的方法。
  */
 export function EventListener<Events extends EventEmitter.ValidEventTypes>(
-  eventTarget: EventTarget | EventEmitter<Events>,
+  eventTarget: EventTarget | EventEmitter<Events> | string,
   eventName: keyof WindowEventMap | keyof Events
 ) {
   return (target: object, arg: any) => {

@@ -101,7 +101,7 @@ export class VueClassMetadata {
   readonly setup: string[] = []
 
   readonly eventListener: Array<{
-    eventTarget: EventTarget | EventEmitter<any>
+    eventTarget: EventTarget | EventEmitter<any> | string
     eventName: string
     methodName: string
   }> = []
@@ -185,7 +185,16 @@ export class VueClassMetadata {
   handleEventListener(instance: object) {
     for (let item of this.eventListener) {
       const method = (instance as any)[item.methodName].bind(instance)
-      if (item.eventTarget instanceof EventEmitter) item.eventTarget.on(item.eventName, method)
+      if (typeof item.eventTarget === "string") {
+        const className = item.eventTarget
+        onMounted(() => {
+          const array = document.getElementsByClassName(className)
+          console.log(array, className)
+          for (let el of array) {
+            el.addEventListener(item.eventName, method)
+          }
+        })
+      } else if (item.eventTarget instanceof EventEmitter) item.eventTarget.on(item.eventName, method)
       else item.eventTarget.addEventListener(item.eventName, method)
     }
   }
