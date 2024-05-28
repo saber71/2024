@@ -91,7 +91,12 @@ export function toNative<Props extends VueComponentBaseProps, Emit extends Emits
           ;(instance as any)["$off_" + item.methodName]?.()
         })
         for (let item of metadata.eventListener) {
-          if (item.eventTarget instanceof EventEmitter)
+          if (typeof item.eventTarget === "string") {
+            const array = document.getElementsByClassName(item.eventTarget)
+            for (let el of array) {
+              el.removeEventListener(item.eventName, (instance as any)[item.methodName])
+            }
+          } else if (item.eventTarget instanceof EventEmitter)
             item.eventTarget.off(item.eventName, (instance as any)[item.methodName])
           else item.eventTarget.removeEventListener(item.eventName, (instance as any)[item.methodName])
         }

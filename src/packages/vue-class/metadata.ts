@@ -189,7 +189,6 @@ export class VueClassMetadata {
         const className = item.eventTarget
         onMounted(() => {
           const array = document.getElementsByClassName(className)
-          console.log(array, className)
           for (let el of array) {
             el.addEventListener(item.eventName, method)
           }

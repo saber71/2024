@@ -6,6 +6,7 @@ import {
   Component,
   type ComponentProps,
   EventListener,
+  Hook,
   Link,
   Mut,
   toNative,
@@ -23,6 +24,7 @@ import { Button, ConfigProvider, Dropdown, Flex, Menu } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import zhCN from "ant-design-vue/es/locale/zh_CN"
 import type { MenuInfo } from "ant-design-vue/es/menu/src/interface"
+import interact from "interactjs"
 import { OverlayScrollbarsComponent } from "overlayscrollbars-vue"
 import type { VNodeChild } from "vue"
 import { RouterView } from "vue-router"
@@ -38,10 +40,9 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   @Inject() dataService: PhotoDataService
   @Mut() openKeys: Key[] = []
   @Mut() collapsed = false
-  @Mut() isStretching = false
+  @Mut() inResize = false
   @Link() asideEl: HTMLElement
   @Mut() asideWidth = -1
-  stretchLineDownPos?: MouseEvent
 
   @Watcher() toReadImageInfos() {
     this.dataService.imageInfos = []
@@ -58,24 +59,20 @@ export class PhotoInst extends VueComponent<PhotoProps> {
     }
   }
 
-  @BindThis() handleMouseDownStretchLine(e: MouseEvent) {
-    this.isStretching = true
-    this.stretchLineDownPos = e
-    this.asideWidth = this.asideEl.getBoundingClientRect().width
-    this.collapsed = false
-  }
-
-  @EventListener(document, "mouseup") handleMouseUpStretchLine() {
-    if (!this.isStretching) return
-    this.isStretching = false
-    this.stretchLineDownPos = undefined
-  }
-
-  @EventListener(document, "mousemove") handleMouseMoveStretchLine(e: MouseEvent) {
-    if (!this.stretchLineDownPos) return
-    const delta = e.clientX - this.stretchLineDownPos.clientX
-    this.asideWidth = Math.max(this.asideWidth + delta, 0)
-    this.stretchLineDownPos = e
+  @Hook("onMounted") toResizeAside() {
+    interact(this.asideEl)
+      .resizable({
+        edges: {
+          right: true
+        },
+        listeners: {
+          move: (e: { rect: { width: number } }) => {
+            this.asideWidth = Math.max(e.rect.width, 0)
+          }
+        }
+      })
+      .on("resizestart", () => (this.inResize = true))
+      .on("resizeend", () => (this.inResize = false))
   }
 
   @BindThis() handleToDirectoryManager() {
@@ -132,7 +129,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
               class={[
                 "relative h-full overflow-auto border-r-gray-100 border-0 border-r border-solid border-box select-none flex-shrink-0",
                 If(this.collapsed).then("").else("w-96"),
-                If(this.isStretching).then("").else("transition-all")
+                If(this.inResize).then("").else("transition-all")
               ]}
               style={{
                 minWidth: "81px",
@@ -161,13 +158,6 @@ export class PhotoInst extends VueComponent<PhotoProps> {
                 onClick={this.handleClickMenuItem}
                 style={{ border: "0" }}
               />
-
-              {/*用来拉伸菜单栏的线*/}
-              <div
-                class={"absolute top-0 right-0 h-full cursor-col-resize"}
-                style={{ width: "5px" }}
-                onMousedown={this.handleMouseDownStretchLine}
-              ></div>
             </div>
 
             {/*主体部分容器*/}
