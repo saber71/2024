@@ -7,6 +7,7 @@ export interface SendChannelMap extends PhotoSendChannelMap {
   "window:isMaximized": boolean
   "window:isShow": boolean
   "window:isFocus": boolean
+  "window:isFullscreen": boolean
   "window:size": [number, number]
 }
 

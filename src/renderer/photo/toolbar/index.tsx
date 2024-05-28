@@ -22,7 +22,7 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
 
   render(): VNodeChild {
     return (
-      <Flex align={"center"}>
+      <Flex align={"center"} style={{ height: "fit-content" }}>
         <Dropdown
           trigger={"click"}
           overlay={

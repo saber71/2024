@@ -25,6 +25,7 @@ type SortOrder = "birthtimeMs" | "mtimeMs" | "name"
 type ShowType = "rect" | "same-height"
 type ShowSize = "small" | "medium" | "big"
 export type FilterType = "all" | "image" | "video"
+export const KEY_PREFIX = "$path:"
 
 export const photoEventBus = new EventEmitter<{
   scroll: () => void
@@ -86,6 +87,35 @@ export class PhotoDataService extends VueService {
                 this.allDirectories = this.allDirectories.slice()
                 return Promise.resolve()
               }
+            }
+          })
+        }
+      }
+    },
+    {
+      label: "重命名",
+      key: "rename",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curDirectory) {
+          let directoryName = ""
+          Modal.confirm({
+            title: "重命名文件夹",
+            centered: true,
+            okText: "新建",
+            content: () => (
+              <Input
+                value={directoryName}
+                onUpdate:value={(val) => (directoryName = val)}
+                placeholder={"请输入文件夹的新名字"}
+              />
+            ),
+            onOk: async () => {
+              if (!directoryName) return Promise.reject("directory name is empty!")
+              const curDirectory = this.curDirectory!
+              curDirectory.name = directoryName
+              this.allDirectories = this.allDirectories.slice()
+              return Promise.resolve()
             }
           })
         }
@@ -278,13 +308,43 @@ export class PhotoDataService extends VueService {
   }
 
   /**
+   * 在侧边菜单中查找指定键的菜单项。
+   *
+   * @param key 要查找的菜单项的键。
+   * @returns 返回找到的菜单项，如果未找到则返回 undefined。
+   */
+  findMenuItem(key: string): ItemType | undefined {
+    // 通过递归查找指定键的菜单项
+    return find(this.asideMenu)
+
+    /**
+     * 递归查找菜单项。
+     *
+     * @param itemTypes 要在其中查找的菜单项数组。
+     * @returns 返回找到的菜单项，如果未找到则返回 undefined。
+     */
+    function find(itemTypes: ItemType[]): ItemType | undefined {
+      for (let item of itemTypes) {
+        // 如果当前项的键与目标键匹配，则返回当前项
+        if (item!.key === key) return item
+        // 如果当前项有子项，则在子项中递归查找
+        if ((item as any).children) {
+          const result = find((item as any).children)
+          // 如果在子项中找到了目标项，则返回该项
+          if (result) return result
+        }
+      }
+    }
+  }
+
+  /**
    * 查找指定路径的目录。
    * @param key 以"$path:"开头的字符串，表示要查找的路径。
    * @returns 返回找到的目录对象，如果未找到则返回undefined。
    */
   findDirectory(key: string) {
     // 从key中截取路径字符串
-    const path = key.slice("$path:".length)
+    const path = key.indexOf(KEY_PREFIX) === 0 ? key.slice(KEY_PREFIX.length) : key
     // 调用find函数在所有目录中查找指定路径
     return find(this.allDirectories, path)
 
@@ -345,7 +405,7 @@ export class PhotoDataService extends VueService {
  */
 function toItemType(dir: Directory): ItemType {
   return {
-    key: "$path:" + dir.path, // 使用目录的路径作为键
+    key: KEY_PREFIX + dir.path, // 使用目录的路径作为键
     label: dir.name, // 目录的名称作为标签和标题
     title: dir.name,
     icon: h(FolderOpenOutlined), // 使用打开的文件夹图标

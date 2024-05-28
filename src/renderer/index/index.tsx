@@ -51,10 +51,10 @@ export class IndexInst extends VueComponent<IndexProps> {
               Documentation
             </a>
             <a target="_blank" rel="noreferrer" onClick={this.handlePing}>
-              Send IPC
+              ping主进程一下
             </a>
             <a target="_blank" rel="noreferrer" onClick={this.handleOpenPhoto}>
-              Open photo
+              打开照片
             </a>
           </div>
         </div>

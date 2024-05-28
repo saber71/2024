@@ -11,7 +11,8 @@ import {
   type VueComponentBaseProps
 } from "@packages/vue-class"
 import { invoke } from "@renderer/exposed.ts"
-import { PhotoDataService } from "@renderer/photo/data.service.tsx"
+import { KEY_PREFIX, PhotoDataService } from "@renderer/photo/data.service.tsx"
+import ImgList from "@renderer/photo/img-list"
 import { Flex } from "ant-design-vue"
 import type { VNodeChild } from "vue"
 import "./index.scss"
@@ -25,7 +26,8 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
 
   @Inject() dataService: PhotoDataService
 
-  @Setup() async updateDirectoryThumbnail() {
+  @Setup()
+  async updateDirectoryThumbnail() {
     await invoke("photo:getDirectoryThumbnail", this.dataService.allDirectories).then(
       (paths) => (this.dataService.directoryThumbnails = paths)
     )
@@ -41,6 +43,14 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
     this.dataService.curDirectory = dir
   }
 
+  @BindThis() handleClickDirectory(dir: Directory) {
+    const key = KEY_PREFIX + dir.path
+    this.dataService.selectedKeys = [key]
+    this.dataService.curItemType = this.dataService.findMenuItem(key) as any
+    this.dataService.curDirectory = this.dataService.findDirectory(dir.path)
+    this.router.push({ name: ImgList.name })
+  }
+
   render(): VNodeChild {
     return (
       <Flex gap={50} wrap={"wrap"} class={"pt-2 pl-2 pr-2 box-border"}>
@@ -49,7 +59,11 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
           <span class={"add-text"}>添加文件夹</span>
         </div>
         {this.dataService.allDirectories.map((dir, index) => (
-          <div class={"directory-item"} onContextmenu={(e) => this.showContextmenu(e, dir)}>
+          <div
+            class={"directory-item"}
+            onContextmenu={(e) => this.showContextmenu(e, dir)}
+            onClick={() => this.handleClickDirectory(dir)}
+          >
             <img class={"icon"} src={directoryImg} />
             <img class={"thumbnail"} src={this.dataService.directoryThumbnails[index]} />
             <span class={"name"}>{dir.name}</span>

@@ -1,4 +1,4 @@
-import { isImageExtName, isVideoExtName, spread } from "@packages/common"
+import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
 import type { ImageInfo } from "@packages/electron"
 import {
@@ -24,6 +24,7 @@ interface Picture {
   info: ImageInfo
   width: number // 图片宽度
   height: number // 图片高度
+  fullyClick: FullyClick
 }
 
 /**
@@ -46,9 +47,10 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Link() imgContainerEl: HTMLElement
   @Mut() rowPictures: RowPicture[] = []
   @Mut() rowHeight = 200
-  @Mut() gap = 50
+  @Mut() gap = 25
   @Mut() visibleStartRowIndex = 0
   @Mut() visibleEndRowIndex = 0
+  @Mut() scaledPictures = new Set<string>()
   @Disposable("disconnect") resizeObserver: ResizeObserver
   filterType: FilterType = "all"
 
@@ -115,7 +117,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       if (this.filterType === "image" && !isImageExtName(info.extName)) continue
       if (this.filterType === "video" && !isVideoExtName(info.extName)) continue
       if (accWidth > containerWidth) newRow()
-      const picture = toPicture(info)
+      const picture = toPicture.call(this, info)
       if (row.array.length === 0) {
         row.array.push(picture)
         accWidth += picture.width + this.gap
@@ -134,7 +136,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     if (row.array.length === 0) rows.pop()
     this.rowPictures = rows
 
-    function toPicture(info: ImageInfo): Picture {
+    function toPicture(this: ImgListInst, info: ImageInfo): Picture {
       let width: number, height: number
       if (type === "same-height") {
         height = size
@@ -142,11 +144,17 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       } else {
         width = height = size
       }
-      return {
+      const pic: Picture = {
         info,
         width,
-        height
+        height,
+        fullyClick: fullyClick(
+          200,
+          () => this.scaledPictures.add(pic.info.path),
+          () => this.scaledPictures.delete(pic.info.path)
+        )
       }
+      return pic
     }
   }
 
@@ -178,7 +186,8 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                   <div
                     class={[
                       "picture relative bg-gray-100 flex-shrink-0 box-shadow-hover transition box-border",
-                      checked ? "checked-picture" : ""
+                      checked ? "checked-picture" : "",
+                      !this.scaledPictures.has(pic.info.path) ? "" : "picture-mousedown"
                     ]}
                     style={{
                       width: pic.width + "px",
@@ -186,6 +195,9 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                       flexGrow: row.complete && this.dataService.imageShowSetting.type !== "rect" ? "1" : "0"
                     }}
                     onClick={() => this.dataService.selectImage(pic)}
+                    onMousedown={pic.fullyClick.onMousedown}
+                    onMouseup={pic.fullyClick.onMouseup}
+                    onMouseleave={pic.fullyClick.onMouseup}
                   >
                     <img
                       class={"block object-cover object-center"}
@@ -194,7 +206,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                       loading={"lazy"}
                       title={pic.info.name}
                     />
-                    <div class={["checkbox", checked ? "checked" : ""]} onClick={(e) => e.stopPropagation()}>
+                    <div class={["checkbox", checked ? "checked" : ""]} onMousedown={(e) => e.stopPropagation()}>
                       <Checkbox checked={checked} onUpdate:checked={(val) => this.handleClickCheckbox(val, pic)} />
                     </div>
                   </div>

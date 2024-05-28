@@ -1,7 +1,6 @@
 import { AppstoreAddOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons-vue"
 import { If } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
-import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
   Component,
@@ -16,7 +15,7 @@ import {
 } from "@packages/vue-class"
 import TitleBar from "@renderer/components/title-bar"
 import { invoke } from "@renderer/exposed.ts"
-import { PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
+import { KEY_PREFIX, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
 import DirectoryManager from "@renderer/photo/directory-manager"
 import ImgList from "@renderer/photo/img-list"
 import Toolbar from "@renderer/photo/toolbar"
@@ -50,23 +49,12 @@ export class PhotoInst extends VueComponent<PhotoProps> {
     if (key === "all-images") {
       invoke("photo:readImages", this.dataService.allDirectories)
       this.dataService.curDirectory = undefined
-    } else if ((key + "").indexOf("$path:") === 0) {
-      const path = (key + "").replace("$path:", "")
-      const dir = findDirectory(this.dataService.allDirectories, path)
+    } else if ((key + "").indexOf(KEY_PREFIX) === 0) {
+      const dir = this.dataService.findDirectory(key + "")
       if (dir) invoke("photo:readImages", [dir])
       this.dataService.curDirectory = dir
     } else {
       this.dataService.curDirectory = undefined
-    }
-
-    function findDirectory(directories: Directory[], path: string): Directory | undefined {
-      for (let directory of directories) {
-        if (directory.path === path) return directory
-        if (directory.children) {
-          const result = findDirectory(directory.children, path)
-          if (result) return result
-        }
-      }
     }
   }
 
@@ -209,7 +197,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
                   </div>
 
                   {/*工具栏*/}
-                  <Toolbar />
+                  {this.route.name === ImgList.name ? <Toolbar /> : <div></div>}
                 </Flex>
 
                 {/*路由页面*/}

@@ -3,6 +3,7 @@
     border-color: transparent;
     border-radius: 4px;
     overflow: hidden;
+    transition: all 0.2s;
 
     .checkbox {
       display: none;
@@ -49,6 +50,10 @@
         display: inline-flex;
       }
     }
+  }
+
+  .picture-mousedown {
+    transform: scale(0.95);
   }
 
   .checked-picture:before {

@@ -45,6 +45,10 @@ export function createWindow(options: CreateWindowOptions) {
     window.on("maximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
     window.on("unmaximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
 
+    // 监听窗口的全屏事件，向渲染进程发送当前状态。
+    window.on("enter-full-screen", () => sendToWeb(window, "window:isFullscreen", true))
+    window.on("leave-full-screen", () => sendToWeb(window, "window:isFullscreen", false))
+
     // 监听窗口的显示和隐藏事件，向渲染进程发送当前状态。
     window.on("show", () => sendToWeb(window, "window:isShow", true))
     window.on("hide", () => sendToWeb(window, "window:isShow", false))

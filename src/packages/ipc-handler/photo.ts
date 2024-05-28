@@ -118,11 +118,24 @@ export class Photo {
   // 创建一个名为"photo"的集合，用于存储目录信息。
   readonly collection = new Collection("photo")
 
+  // 照片窗口的对象
+  photoWindow?: BrowserWindow
+
   /**
    * 打开一个照片窗口。
    */
   @Handler("photo:open") open() {
-    createWindow({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 })
+    // 如果照片窗口已存在，则使其获得焦点，不再创建新窗口
+    if (this.photoWindow) {
+      this.photoWindow.focus()
+      return
+    }
+    // 创建一个新窗口用于显示照片，配置包括无边框、最大化、最小宽度和高度
+    createWindow({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 }).then((window) => {
+      this.photoWindow = window
+      // 当窗口关闭时，重置photoWindow的引用，防止其泄露
+      window.on("closed", () => (this.photoWindow = undefined))
+    })
   }
 
   /**
@@ -220,8 +233,9 @@ export class Photo {
  * @returns 返回一个Promise，该Promise解析为一个包含所有目录中图片文件路径的数组。
  */
 function getDirectoryImagePaths(directories: Directory[]) {
+  const flat = flatChildren(directories)
   return Promise.all(
-    directories.map((directory) =>
+    flat.map((directory) =>
       promises.readdir(directory.path).then((files) =>
         // 过滤出目录中的图片文件并保留其完整路径。
         files
@@ -234,6 +248,15 @@ function getDirectoryImagePaths(directories: Directory[]) {
       )
     )
   )
+
+  function flatChildren(directories: Directory[]) {
+    const result: Directory[] = []
+    for (let directory of directories) {
+      result.push(directory)
+      if (directory.children) result.push(...flatChildren(directory.children))
+    }
+    return result
+  }
 }
 
 /**
