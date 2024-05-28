@@ -13,7 +13,10 @@ const alias = {
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin(), swc.vite()],
-    resolve: { alias }
+    resolve: { alias },
+    build: {
+      assetsInlineLimit: 0
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

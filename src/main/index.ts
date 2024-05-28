@@ -1,7 +1,7 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
-import { createWindow } from "@packages/electron"
+import { createWindow, RunningAnimal } from "@packages/electron"
 import { IpcHandler } from "@packages/ipc-handler"
 import { app, BrowserWindow, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
@@ -17,6 +17,11 @@ ffmpeg.setFfprobePath(FfprobePath)
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
+
+  const runningAnimal = new RunningAnimal()
+  runningAnimal.init().then(() => {
+    runningAnimal.show()
+  })
 
   /**
    * 监听Web请求的头信息接收事件。
