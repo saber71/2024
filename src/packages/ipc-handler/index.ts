@@ -34,7 +34,7 @@ export class IpcHandler {
       // 遍历所有通道配置项。
       let instance = this._instances.get(item.clazz) // 尝试获取当前通道对应的实例。
       if (!instance) this._instances.set(item.clazz, (instance = new item.clazz())) // 如果实例不存在，则创建并存储一个新实例。
-      ipcMain.handle(item.channel, (e, ...args) => (instance as any)[item.methodName](...args, e)) // 绑定事件处理函数。
+      ipcMain.handle(item.channel, (e, ...args) => instance[item.methodName](...args, e)) // 绑定事件处理函数。
     }
   }
 

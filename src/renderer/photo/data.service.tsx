@@ -73,7 +73,7 @@ export class PhotoDataService extends VueService {
             ),
             onOk: async () => {
               const curDirectory = this.curDirectory!
-              const path = await invoke("createDirectory", curDirectory.path, directoryName)
+              const path = await invoke("fs:createDirectory", curDirectory.path, directoryName)
               if (!path) {
                 status.value = "error"
                 return Promise.reject(`文件名${directoryName}已存在`)
@@ -126,7 +126,7 @@ export class PhotoDataService extends VueService {
       key: "open-directory",
       onClick: () => {
         if (this.curDirectory) {
-          invoke("showItemInFolder", this.curDirectory.path)
+          invoke("fs:showItemInFolder", this.curDirectory.path)
         }
       }
     },
