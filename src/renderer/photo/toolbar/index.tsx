@@ -1,15 +1,27 @@
 import {
   AppstoreOutlined,
   CheckOutlined,
+  CloseOutlined,
   DashOutlined,
   DownOutlined,
   FunnelPlotOutlined,
+  RightCircleOutlined,
   SortAscendingOutlined
 } from "@ant-design/icons-vue"
 import { Inject } from "@packages/dependency-injection"
-import { Component, type ComponentProps, toNative, VueComponent, type VueComponentBaseProps } from "@packages/vue-class"
+import type { Directory } from "@packages/ipc-handler/photo.ts"
+import {
+  BindThis,
+  Component,
+  type ComponentProps,
+  Computed,
+  Mut,
+  toNative,
+  VueComponent,
+  type VueComponentBaseProps
+} from "@packages/vue-class"
 import { PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
-import { Button, Dropdown, Flex, Menu, MenuDivider, MenuItem } from "ant-design-vue"
+import { Button, Dropdown, Flex, Menu, MenuDivider, MenuItem, Modal, Tree } from "ant-design-vue"
 import type { VNodeChild } from "vue"
 
 export interface ToolbarProps extends VueComponentBaseProps {}
@@ -19,10 +31,63 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
   static readonly defineProps: ComponentProps<ToolbarProps> = ["inst"]
 
   @Inject() dataService: PhotoDataService
+  @Mut() openModal = false
+  @Mut() selectedKeys: any[] = []
+  copyOrMove: "复制" | "移动" = "移动"
+
+  @Computed() get allDirectories() {
+    return this.dataService.allDirectories.map(toTreeData)
+
+    function toTreeData(dir: Directory): any {
+      return {
+        title: dir.name,
+        key: dir.path,
+        children: dir.children?.map(toTreeData)
+      }
+    }
+  }
+
+  @BindThis() updateOpenModal(val: boolean) {
+    this.openModal = val
+    if (!this.openModal) {
+      this.selectedKeys = []
+    }
+  }
+
+  @BindThis() copyOrMoveFiles(type: "复制" | "移动") {
+    this.openModal = true
+    this.copyOrMove = type
+  }
 
   render(): VNodeChild {
     return (
       <Flex align={"center"} style={{ height: "fit-content" }}>
+        {this.dataService.selectedImagePaths.size ? (
+          <Button type={"text"} icon={<CloseOutlined />} onClick={() => photoEventBus.emit("unselectAll")}>
+            已选择{this.dataService.selectedImagePaths.size}
+          </Button>
+        ) : null}
+        {this.dataService.selectedImagePaths.size ? (
+          <Dropdown
+            trigger={"click"}
+            overlay={
+              <Menu>
+                <MenuItem key={"1"} onClick={() => this.copyOrMoveFiles("移动")}>
+                  移动到文件夹
+                </MenuItem>
+                <MenuItem key={"2"} onClick={() => this.copyOrMoveFiles("复制")}>
+                  复制到文件夹
+                </MenuItem>
+              </Menu>
+            }
+          >
+            <Button type={"text"}>
+              <RightCircleOutlined />
+              <span class={"ml-1"}>移动/复制</span>
+              <DownOutlined style={{ fontSize: "10px" }} />
+            </Button>
+          </Dropdown>
+        ) : null}
         <Dropdown
           trigger={"click"}
           overlay={
@@ -199,6 +264,23 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
             <DashOutlined />
           </Button>
         </Dropdown>
+        <Modal
+          centered
+          open={this.openModal}
+          onUpdate:open={this.updateOpenModal}
+          title={this.copyOrMove + this.dataService.selectedImagePaths.size + "项"}
+        >
+          <p>选择文件夹</p>
+          <div style={{ height: "500px" }}>
+            <Tree
+              treeData={this.allDirectories}
+              height={500}
+              blockNode
+              selectedKeys={this.selectedKeys}
+              onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
+            ></Tree>
+          </div>
+        </Modal>
       </Flex>
     )
   }

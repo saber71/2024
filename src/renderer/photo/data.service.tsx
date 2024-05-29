@@ -225,7 +225,7 @@ export class PhotoDataService extends VueService {
   ]
 
   // 左侧菜单的选中项key
-  @Mut() selectedKeys: Key[] = ["all-images"]
+  @Mut() selectedAsideKeys: Key[] = ["all-images"]
 
   // 滚动条实例
   scrollbarInstance?: OverlayScrollbars

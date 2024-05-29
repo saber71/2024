@@ -45,7 +45,7 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
 
   @BindThis() handleClickDirectory(dir: Directory) {
     const key = KEY_PREFIX + dir.path
-    this.dataService.selectedKeys = [key]
+    this.dataService.selectedAsideKeys = [key]
     this.dataService.curItemType = this.dataService.findMenuItem(key) as any
     this.dataService.curDirectory = this.dataService.findDirectory(dir.path)
     this.router.push({ name: ImgList.name })

@@ -46,7 +46,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
 
   @Watcher() toReadImageInfos() {
     this.dataService.imageInfos = []
-    const key = this.dataService.selectedKeys[0]
+    const key = this.dataService.selectedAsideKeys[0]
     if (key === "all-images") {
       invoke("photo:readImages", this.dataService.allDirectories)
       this.dataService.curDirectory = undefined
@@ -77,7 +77,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
 
   @BindThis() handleToDirectoryManager() {
     this.dataService.curItemType = this.dataService.asideMenu[2] as any
-    this.dataService.selectedKeys = ["directories"]
+    this.dataService.selectedAsideKeys = ["directories"]
     this.router.push({ name: DirectoryManager.name })
   }
 
@@ -150,11 +150,11 @@ export class PhotoInst extends VueComponent<PhotoProps> {
               {/*菜单*/}
               <Menu
                 items={this.dataService.asideMenu}
-                selectedKeys={this.dataService.selectedKeys}
+                selectedKeys={this.dataService.selectedAsideKeys}
                 openKeys={this.openKeys}
                 inlineCollapsed={this.collapsed || (this.asideWidth <= 90 && this.asideWidth >= 0)}
                 mode={"inline"}
-                onUpdate:selectedKeys={(val) => (this.dataService.selectedKeys = val)}
+                onUpdate:selectedKeys={(val) => (this.dataService.selectedAsideKeys = val)}
                 onClick={this.handleClickMenuItem}
                 style={{ border: "0" }}
               />

@@ -2,7 +2,7 @@ import { Collection } from "@packages/collection"
 import { isImageExtName, isVideoExtName } from "@packages/common"
 import { createWindow, getImageInfo, type ImageInfo, sendToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
-import { Handler } from "@packages/ipc-handler/handler.ts"
+import { Handler } from "@packages/ipc-handler/decorator.ts"
 import { app, BrowserWindow, dialog } from "electron"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
@@ -114,7 +114,7 @@ interface Directories extends FilterItem {
 }
 
 // 定义一个Photo类，处理照片相关操作，包括打开照片窗口、添加和移除目录、获取所有目录、读取图片信息。
-export class Photo {
+export class PhotoIpcHandler {
   // 创建一个名为"photo"的集合，用于存储目录信息。
   readonly collection = new Collection("photo")
 
