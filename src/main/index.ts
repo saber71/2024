@@ -8,7 +8,10 @@ import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
 
+// 设置FFmpeg可执行文件的路径
 ffmpeg.setFfmpegPath(FfmpegPath)
+
+// 设置FFprobe可执行文件的路径
 ffmpeg.setFfprobePath(FfprobePath)
 
 // This method will be called when Electron has finished
@@ -18,8 +21,17 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
 
+  /**
+   * 创建并初始化一个正在奔跑的动物实例，在系统托盘展示它。
+   * 这段代码首先实例化一个RunningAnimal对象，然后在初始化完成后展示这个动物。
+   */
+
+  // 实例化一个RunningAnimal对象
   const runningAnimal = new RunningAnimal()
+
+  // 初始化RunningAnimal实例，完成后执行回调函数
   runningAnimal.init().then(() => {
+    // 展示初始化完成的动物实例
     runningAnimal.show()
   })
 
