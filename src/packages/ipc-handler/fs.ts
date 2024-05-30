@@ -1,8 +1,10 @@
+import { extractFilePathFromAtomUrl, toAtomUrl } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { Handler } from "@packages/ipc-handler/decorator.ts"
 import { dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
 import fsExtra from "fs-extra"
 import { promises } from "node:fs"
+import { basename } from "node:path"
 import { join } from "path"
 
 export interface FsInvokeChannelMap {
@@ -26,13 +28,28 @@ export interface FsInvokeChannelMap {
     args: [string, string] // 参数为父路径和新目录名
     return: string // 如果创建成功返回新目录的完整路径，失败则返回空字符串
   }
+  /**
+   * 复制文件或文件夹。
+   * @param src 要复制的源文件或文件夹的路径数组。
+   * @param dest 复制到的目标路径。
+   * @param overwriteAsSameName 是否允许覆盖同名文件。
+   * @param recursive 是否递归复制。如果指定路径为文件夹，此参数决定是否复制子目录。
+   * @returns 返回一个Promise数组，包含每个复制操作的结果。
+   */
   "fs:copy": {
     args: [{ src: string[]; dest: string; overwriteAsSameName: boolean; recursive?: boolean }]
-    return: PromiseSettledResult<void>[]
+    return: PromiseSettledResult<string>[]
   }
+  /**
+   * 移动文件或文件夹。
+   * @param src 要移动的源文件或文件夹的路径数组。
+   * @param dest 移动到的目标路径。
+   * @param overwriteAsSameName 是否允许覆盖同名文件。
+   * @returns 返回一个Promise数组，包含每个移动操作的结果。
+   */
   "fs:move": {
     args: [{ src: string[]; dest: string; overwriteAsSameName: boolean }]
-    return: PromiseSettledResult<void>[]
+    return: PromiseSettledResult<string>[]
   }
 }
 
@@ -102,9 +119,15 @@ export class FsIpcHandler {
   @Handler("fs:copy") async copy(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
     // 对每个源文件执行复制操作，并等待所有操作完成
     return await Promise.allSettled(
-      option.src.map((src) =>
-        fsExtra.copy(src, option.dest, { overwrite: option.overwriteAsSameName, recursive: option.recursive })
-      )
+      option.src.map(async (src) => {
+        src = extractFilePathFromAtomUrl(src)
+        const dest = changePath(src, option.dest)
+        await fsExtra.copy(extractFilePathFromAtomUrl(src), dest, {
+          overwrite: option.overwriteAsSameName,
+          recursive: option.recursive
+        })
+        return toAtomUrl(dest)
+      })
     )
   }
 
@@ -116,7 +139,17 @@ export class FsIpcHandler {
   @Handler("fs:move") async move(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
     // 对每个源文件执行移动操作，并等待所有操作完成
     return await Promise.allSettled(
-      option.src.map((src) => fsExtra.move(src, option.dest, { overwrite: option.overwriteAsSameName }))
+      option.src.map(async (src) => {
+        src = extractFilePathFromAtomUrl(src)
+        const dest = changePath(src, option.dest)
+        await fsExtra.move(src, dest, { overwrite: option.overwriteAsSameName })
+        return toAtomUrl(dest)
+      })
     )
   }
+}
+
+function changePath(src: string, dst: string) {
+  const srcName = basename(extractFilePathFromAtomUrl(src))
+  return join(dst, srcName)
 }

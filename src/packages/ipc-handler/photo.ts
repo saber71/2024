@@ -18,7 +18,7 @@ import { join } from "path"
 export interface Directory {
   name: string
   path: string
-  children?: Directory[]
+  thumbnail: string
 }
 
 /**
@@ -43,7 +43,7 @@ export interface PhotoInvokeChannelMap {
    */
   "photo:selectDirectory": {
     args: [] // 参数列表为空
-    return: { dir: Directory; thumbnail: string } | undefined // 选中的目录对象和缩略图，如果未选中则返回undefined
+    return: Directory | undefined // 选中的目录对象和缩略图，如果未选中则返回undefined
   }
 
   /**
@@ -166,10 +166,12 @@ export class PhotoIpcHandler {
       // 创建一个包含目录路径和名称的对象。
       const dir: Directory = {
         path: result.filePaths[0],
-        name: basename(result.filePaths[0])
+        name: basename(result.filePaths[0]),
+        thumbnail: ""
       }
       const thumbnails = await this.getDirectoryThumbnail([dir])
-      return { dir, thumbnail: thumbnails[0] }
+      dir.thumbnail = thumbnails[0]
+      return dir
     }
   }
 
@@ -185,11 +187,13 @@ export class PhotoIpcHandler {
       const picturePath = app.getPath("pictures")
       const directoryName = basename(picturePath)
       const array = await this.collection.save<Directories>({
-        array: [{ name: directoryName, path: picturePath }],
+        array: [{ name: directoryName, path: picturePath, thumbnail: "" }],
         _id: ALL_DIRECTORIES
       })
       data = array[0]
     }
+    const thumbnails = await this.getDirectoryThumbnail(data.array)
+    thumbnails.forEach((thumbnail, index) => (data.array[index].thumbnail = thumbnail))
     return data.array
   }
 
@@ -233,9 +237,8 @@ export class PhotoIpcHandler {
  * @returns 返回一个Promise，该Promise解析为一个包含所有目录中图片文件路径的数组。
  */
 function getDirectoryImagePaths(directories: Directory[]) {
-  const flat = flatChildren(directories)
   return Promise.all(
-    flat.map((directory) =>
+    directories.map((directory) =>
       promises.readdir(directory.path).then((files) =>
         // 过滤出目录中的图片文件并保留其完整路径。
         files
@@ -248,15 +251,6 @@ function getDirectoryImagePaths(directories: Directory[]) {
       )
     )
   )
-
-  function flatChildren(directories: Directory[]) {
-    const result: Directory[] = []
-    for (let directory of directories) {
-      result.push(directory)
-      if (directory.children) result.push(...flatChildren(directory.children))
-    }
-    return result
-  }
 }
 
 /**

@@ -7,8 +7,10 @@ import {
   type ComponentProps,
   Disposable,
   EventListener,
+  Hook,
   Link,
   Mut,
+  Readonly,
   Throttle,
   toNative,
   VueComponent,
@@ -47,7 +49,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   @Link() imgContainerEl: HTMLElement
   @Mut() rowPictures: RowPicture[] = []
   @Mut() rowHeight = 200
-  @Mut() gap = 25
+  @Readonly() gap = 25
   @Mut() visibleStartRowIndex = 0
   @Mut() visibleEndRowIndex = 0
   @Mut() scaledPictures = new Set<string>()
@@ -57,6 +59,10 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   onMounted() {
     this.resizeObserver = new ResizeObserver(this.updateRowPictures)
     this.resizeObserver.observe(this.imgContainerEl, { box: "border-box" })
+  }
+
+  @Hook("onBeforeRouteLeave") clearSelectedImagePaths() {
+    this.dataService.selectedImagePaths.clear()
   }
 
   @EventListener(photoEventBus, "scroll") @Watcher() handleScroll() {
@@ -80,6 +86,14 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     let size = 200
     if (this.dataService.imageShowSetting.size === "small") size = 100
     else if (this.dataService.imageShowSetting.size === "big") size = 400
+    if (this.dataService.imageShowSetting.type === "rect" && this.imgContainerEl) {
+      let cols = 6
+      const containerWidth = this.imgContainerEl.getBoundingClientRect().width
+      if (containerWidth <= 900) cols = 2
+      if (this.dataService.imageShowSetting.size === "small") cols += 4
+      else if (this.dataService.imageShowSetting.size === "big") cols /= 2
+      size = Math.floor((containerWidth - this.gap * (cols - 1)) / cols)
+    }
     this.rowHeight = size
     const imageInfos = this.dataService.imageInfos
     // 这里必须要确保访问到imageInfos的属性，否则vue会监听不到
@@ -95,7 +109,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     const type = this.dataService.imageShowSetting.type
     const size = this.rowHeight
     const containerSize = this.imgContainerEl.getBoundingClientRect()
-    const containerWidth = containerSize.width - 16
+    const containerWidth = containerSize.width
     const newRow = () => {
       accWidth = 0
       row = {
@@ -118,18 +132,21 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       if (this.filterType === "video" && !isVideoExtName(info.extName)) continue
       if (accWidth > containerWidth) newRow()
       const picture = toPicture.call(this, info)
+      const width = picture.width
+      console.log(picture.width, accWidth + width, containerWidth, accWidth + width + this.gap)
       if (row.array.length === 0) {
         row.array.push(picture)
-        accWidth += picture.width + this.gap
+        accWidth += width + this.gap
       } else {
-        if (accWidth + picture.width <= containerWidth) {
+        if (accWidth + width <= containerWidth) {
           row.array.push(picture)
-          accWidth += picture.width + this.gap
+          accWidth += width + this.gap
+          console.log(row.array.length)
         } else {
           row.complete = true
           newRow()
           row.array.push(picture)
-          accWidth += picture.width + this.gap
+          accWidth += width + this.gap
         }
       }
     }
@@ -206,7 +223,12 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                       loading={"lazy"}
                       title={pic.info.name}
                     />
-                    <div class={["checkbox", checked ? "checked" : ""]} onMousedown={(e) => e.stopPropagation()}>
+                    <div
+                      class={["checkbox", checked ? "checked" : ""]}
+                      onMousedown={(e) => e.stopPropagation()}
+                      onMouseup={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Checkbox checked={checked} onUpdate:checked={(val) => this.handleClickCheckbox(val, pic)} />
                     </div>
                   </div>

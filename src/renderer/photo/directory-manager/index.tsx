@@ -5,12 +5,10 @@ import {
   BindThis,
   Component,
   type ComponentProps,
-  Setup,
   toNative,
   VueComponent,
   type VueComponentBaseProps
 } from "@packages/vue-class"
-import { invoke } from "@renderer/exposed.ts"
 import { KEY_PREFIX, PhotoDataService } from "@renderer/photo/data.service.tsx"
 import ImgList from "@renderer/photo/img-list"
 import { Flex } from "ant-design-vue"
@@ -25,13 +23,6 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
   static readonly defineProps: ComponentProps<DirectoryManagerProps> = ["inst"]
 
   @Inject() dataService: PhotoDataService
-
-  @Setup()
-  async updateDirectoryThumbnail() {
-    await invoke("photo:getDirectoryThumbnail", this.dataService.allDirectories).then(
-      (paths) => (this.dataService.directoryThumbnails = paths)
-    )
-  }
 
   @BindThis() showContextmenu(e: MouseEvent, dir: Directory) {
     this.dataService.showContextmenu = true
@@ -58,14 +49,14 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
           <PlusCircleOutlined class={"add-icon"} />
           <span class={"add-text"}>添加文件夹</span>
         </div>
-        {this.dataService.allDirectories.map((dir, index) => (
+        {this.dataService.allDirectories.map((dir) => (
           <div
             class={"directory-item"}
             onContextmenu={(e) => this.showContextmenu(e, dir)}
             onClick={() => this.handleClickDirectory(dir)}
           >
             <img class={"icon"} src={directoryImg} />
-            <img class={"thumbnail"} src={this.dataService.directoryThumbnails[index]} />
+            <img class={"thumbnail"} src={dir.thumbnail} />
             <span class={"name"}>{dir.name}</span>
           </div>
         ))}

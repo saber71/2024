@@ -1,6 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import { remove } from "@packages/common"
-import type { ImageInfo } from "@packages/electron"
+import { type ImageInfo } from "@packages/electron"
 import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
@@ -15,7 +15,7 @@ import {
   Watcher
 } from "@packages/vue-class"
 import { invoke } from "@renderer/exposed.ts"
-import { Input, type ItemType, Modal } from "ant-design-vue"
+import { Input, type ItemType, Modal, notification } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import EventEmitter from "eventemitter3"
 import type { OverlayScrollbars } from "overlayscrollbars"
@@ -79,10 +79,10 @@ export class PhotoDataService extends VueService {
                 return Promise.reject(`文件名${directoryName}已存在`)
               } else {
                 status.value = ""
-                if (!curDirectory.children) curDirectory.children = []
-                curDirectory.children.push({
+                this.allDirectories.push({
                   path: path,
-                  name: directoryName
+                  name: directoryName,
+                  thumbnail: ""
                 })
                 this.allDirectories = this.allDirectories.slice()
                 return Promise.resolve()
@@ -144,8 +144,6 @@ export class PhotoDataService extends VueService {
             title: "删除文件夹",
             content: `是否从应用中删除文件夹${this.curDirectory?.name}？`,
             onOk: () => {
-              const index = this.allDirectories.indexOf(this.curDirectory!)
-              this.directoryThumbnails.splice(index, 1)
               remove(this.allDirectories, this.curDirectory)
               this.allDirectories = this.allDirectories.slice()
             },
@@ -179,9 +177,6 @@ export class PhotoDataService extends VueService {
   @Invoke("photo:allDirectories")
   @Mut(true)
   allDirectories: Directory[] = []
-
-  // 目录的缩略图
-  @Mut() directoryThumbnails: string[] = []
 
   // 图片信息列表，用于存储图片的各种信息，例如元数据、文件路径等。
   // 接受来自photo:transferImageInfo频道的数据
@@ -296,14 +291,12 @@ export class PhotoDataService extends VueService {
   @BindThis()
   async addDirectory() {
     // 调用接口选择目录
-    const result = await invoke("photo:selectDirectory")
-    if (result) {
+    const dir = await invoke("photo:selectDirectory")
+    if (dir) {
       // 如果选择成功，将新目录添加到所有目录列表中
-      this.allDirectories.push(result.dir)
+      this.allDirectories.push(dir)
       // 通过切片操作更新 `allDirectories` 数组，以触发视图更新
       this.allDirectories = this.allDirectories.slice()
-      // 将新目录的缩略图添加到缩略图数组中
-      this.directoryThumbnails.push(result.thumbnail)
     }
   }
 
@@ -346,27 +339,76 @@ export class PhotoDataService extends VueService {
     // 从key中截取路径字符串
     const path = key.indexOf(KEY_PREFIX) === 0 ? key.slice(KEY_PREFIX.length) : key
     // 调用find函数在所有目录中查找指定路径
-    return find(this.allDirectories, path)
+    return this.allDirectories.find((dir) => dir.path === path)
+  }
+
+  /**
+   * 异步复制或移动选择的图片到目标目录。
+   * @param copyOrMove 操作类型，为"复制"或"移动"字符串。
+   * @param targetDirectoryPath 目标目录的路径。
+   * @returns 返回一个布尔值，表示所有操作是否成功完成。若所有操作成功，则为true；至少有一个操作失败，则为false。
+   */
+  async copyOrMoveImages(copyOrMove: "复制" | "移动", targetDirectoryPath: string) {
+    // 获取当前选中的图片路径集合
+    const imagePaths = Array.from(this.selectedImagePaths)
+    let result: PromiseSettledResult<string>[]
+
+    // 根据操作类型执行复制或移动
+    if (copyOrMove === "移动")
+      result = await invoke("fs:move", {
+        dest: targetDirectoryPath,
+        src: imagePaths,
+        overwriteAsSameName: false
+      })
+    else
+      result = await invoke("fs:copy", {
+        dest: targetDirectoryPath,
+        src: imagePaths,
+        overwriteAsSameName: false
+      })
+
+    let allSuccess = true,
+      index = 0
+
+    // 清空已选择的图片路径集合
+    this.selectedImagePaths.clear()
+
+    // 遍历操作结果，处理每个图片的复制或移动结果
+    for (let res of result) {
+      if (res.status === "rejected") {
+        // 若操作失败，则设置allSuccess为false，并显示错误信息
+        allSuccess = false
+        notification.error({
+          message: res.reason.message,
+          duration: null
+        })
+      } else {
+        // 若操作成功，则更新图片路径，并在imageInfos中查找对应图片信息进行路径更新
+        const oldImagePath = imagePaths[index]
+        const newImagePath = res.value
+        const imageInfo = this.imageInfos.find((info) => info.path === oldImagePath)
+        if (imageInfo) imageInfo.path = newImagePath
+        imagePaths[index] = newImagePath
+      }
+
+      // 将处理过的图片路径添加回已选择的图片路径集合
+      this.selectedImagePaths.add(imagePaths[index])
+      index++
+    }
 
     /**
-     * 在目录列表中递归查找指定路径的目录。
-     * @param directories 目录列表数组。
-     * @param path 要查找的路径字符串。
-     * @returns 找到的目录对象，如果未找到则返回undefined。
+     * 设置目标目录的缩略图。
+     * 此代码段首先寻找指定路径的目标目录，如果找到，就通过异步调用获取该目录的缩略图，并将其保存到目标目录对象中。
      */
-    function find(directories: Directory[], path: string): Directory | undefined {
-      // 遍历目录列表
-      for (let directory of directories) {
-        // 如果路径匹配，则返回当前目录
-        if (directory.path === path) return directory
-        // 如果当前目录有子目录，则在子目录中递归查找
-        if (directory.children) {
-          const result = find(directory.children, path)
-          // 如果在子目录中找到了目标目录，则返回该目录
-          if (result) return result
-        }
-      }
+    const targetDir = this.findDirectory(targetDirectoryPath) // 寻找指定路径的目标目录
+    if (targetDir) {
+      // 如果目标目录存在，异步获取目录的缩略图
+      const thumbnails = await invoke("photo:getDirectoryThumbnail", [targetDir])
+      // 设置目标目录的缩略图为获取到的第一张缩略图
+      targetDir.thumbnail = thumbnails[0]
     }
+
+    return allSuccess
   }
 
   setup() {
@@ -409,7 +451,6 @@ function toItemType(dir: Directory): ItemType {
     label: dir.name, // 目录的名称作为标签和标题
     title: dir.name,
     icon: h(FolderOpenOutlined), // 使用打开的文件夹图标
-    children: dir.children?.map(toItemType), // 如果存在子目录，递归地将它们转换为项目类型对象
     class: "menu-item-subdirectory"
   }
 }

@@ -32,7 +32,7 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
 
   @Inject() dataService: PhotoDataService
   @Mut() openModal = false
-  @Mut() selectedKeys: any[] = []
+  @Mut() selectedDirectoryPaths: any[] = []
   copyOrMove: "复制" | "移动" = "移动"
 
   @Computed() get allDirectories() {
@@ -41,8 +41,7 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
     function toTreeData(dir: Directory): any {
       return {
         title: dir.name,
-        key: dir.path,
-        children: dir.children?.map(toTreeData)
+        key: dir.path
       }
     }
   }
@@ -50,13 +49,18 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
   @BindThis() updateOpenModal(val: boolean) {
     this.openModal = val
     if (!this.openModal) {
-      this.selectedKeys = []
+      this.selectedDirectoryPaths = []
     }
   }
 
   @BindThis() copyOrMoveFiles(type: "复制" | "移动") {
     this.openModal = true
     this.copyOrMove = type
+  }
+
+  @BindThis() async handleModalConfirm() {
+    await this.dataService.copyOrMoveImages(this.copyOrMove, this.selectedDirectoryPaths[0])
+    this.openModal = false
   }
 
   render(): VNodeChild {
@@ -269,6 +273,8 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
           open={this.openModal}
           onUpdate:open={this.updateOpenModal}
           title={this.copyOrMove + this.dataService.selectedImagePaths.size + "项"}
+          onOk={this.handleModalConfirm}
+          okButtonProps={{ disabled: this.selectedDirectoryPaths.length === 0 }}
         >
           <p>选择文件夹</p>
           <div style={{ height: "500px" }}>
@@ -276,8 +282,8 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
               treeData={this.allDirectories}
               height={500}
               blockNode
-              selectedKeys={this.selectedKeys}
-              onUpdate:selectedKeys={(val) => (this.selectedKeys = val)}
+              selectedKeys={this.selectedDirectoryPaths}
+              onUpdate:selectedKeys={(val) => (this.selectedDirectoryPaths = val)}
             ></Tree>
           </div>
         </Modal>

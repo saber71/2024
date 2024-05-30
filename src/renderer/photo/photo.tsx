@@ -180,9 +180,6 @@ export class PhotoInst extends VueComponent<PhotoProps> {
                     {/*下方小字*/}
                     <div>
                       <span>{imageInfos.length ? `${imageInfos.length}张图片` : ""}</span>
-                      {curDirectory?.children?.length ? (
-                        <span class={"ml-2"}>{curDirectory.children.length}个文件夹</span>
-                      ) : null}
                     </div>
                   </div>
 
