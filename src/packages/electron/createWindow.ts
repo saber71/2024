@@ -1,6 +1,6 @@
 import { is } from "@electron-toolkit/utils"
 import { deepAssign } from "@packages/common"
-import { sendToWeb } from "@packages/electron/sendToWeb.ts"
+import { sendDataToWeb } from "@packages/electron/sendDataToWeb.ts"
 import { BrowserWindow, type BrowserWindowConstructorOptions, shell } from "electron"
 import { join } from "path"
 import icon from "../../../resources/icon.png"
@@ -39,23 +39,23 @@ export function createWindow(options: CreateWindowOptions) {
     window.webContents.ipc.handle("window:id", () => window.id)
 
     // 当浏览器窗口大小发生改变时，会将当前窗口的大小信息发送到渲染进程
-    window.on("resize", () => sendToWeb(window, "window:size", window.getSize() as any))
+    window.on("resize", () => sendDataToWeb(window, "window:size", window.getSize() as any))
 
     // 监听窗口的最大化和取消最大化事件，向渲染进程发送当前状态。
-    window.on("maximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
-    window.on("unmaximize", () => sendToWeb(window, "window:isMaximized", window.isMaximized()))
+    window.on("maximize", () => sendDataToWeb(window, "window:isMaximized", window.isMaximized()))
+    window.on("unmaximize", () => sendDataToWeb(window, "window:isMaximized", window.isMaximized()))
 
     // 监听窗口的全屏事件，向渲染进程发送当前状态。
-    window.on("enter-full-screen", () => sendToWeb(window, "window:isFullscreen", true))
-    window.on("leave-full-screen", () => sendToWeb(window, "window:isFullscreen", false))
+    window.on("enter-full-screen", () => sendDataToWeb(window, "window:isFullscreen", true))
+    window.on("leave-full-screen", () => sendDataToWeb(window, "window:isFullscreen", false))
 
     // 监听窗口的显示和隐藏事件，向渲染进程发送当前状态。
-    window.on("show", () => sendToWeb(window, "window:isShow", true))
-    window.on("hide", () => sendToWeb(window, "window:isShow", false))
+    window.on("show", () => sendDataToWeb(window, "window:isShow", true))
+    window.on("hide", () => sendDataToWeb(window, "window:isShow", false))
 
     // 监听窗口的聚焦和失焦事件，向渲染进程发送当前状态。
-    window.on("focus", () => sendToWeb(window, "window:isFocus", true))
-    window.on("blur", () => sendToWeb(window, "window:isFocus", false))
+    window.on("focus", () => sendDataToWeb(window, "window:isFocus", true))
+    window.on("blur", () => sendDataToWeb(window, "window:isFocus", false))
 
     // 当窗口准备好显示时，根据选项决定是最大化窗口还是直接显示，并解决Promise。
     window.on("ready-to-show", () => {

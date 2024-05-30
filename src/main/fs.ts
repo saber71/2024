@@ -1,6 +1,6 @@
 import { extractFilePathFromAtomUrl, toAtomUrl } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
-import { Handler } from "@packages/ipc-handler/decorator.ts"
+import { Ipc, IpcHandler } from "@packages/vue-class"
 import { dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
 import fsExtra from "fs-extra"
 import { promises } from "node:fs"
@@ -53,13 +53,14 @@ export interface FsInvokeChannelMap {
   }
 }
 
-export class FsIpcHandler {
+@Ipc()
+export class FsIpc {
   /**
    * 处理器函数，用于在文件夹中显示指定的项目。
    * @param path 项目文件的路径，必须为字符串格式。
    * 该函数没有返回值。
    */
-  @Handler("fs:showItemInFolder") showItemInFolder(path: string) {
+  @IpcHandler("fs:showItemInFolder") showItemInFolder(path: string) {
     // 使用shell对象显示指定路径的文件夹中的项目
     shell.showItemInFolder(path)
   }
@@ -69,7 +70,7 @@ export class FsIpcHandler {
    * @param args - 传递给 `fs:showSaveDialog` 方法的参数，第一个参数为对话框选项。
    * @returns 返回一个承诺，解析为 `dialog.showSaveDialog` 方法的返回值（文件路径）。
    */
-  @Handler()
+  @IpcHandler("fs:showSaveDialog")
   async showSaveDialog(
     ...args: InvokeChannelMap["fs:showSaveDialog"]["args"]
   ): Promise<InvokeChannelMap["fs:showSaveDialog"]["return"]> {
@@ -83,7 +84,7 @@ export class FsIpcHandler {
    * @param option 包含打开对话框的配置选项，如初始路径、文件类型等。
    * @returns 返回一个Promise，该Promise解析为用户选择的文件路径数组。
    */
-  @Handler("fs:showOpenDialog")
+  @IpcHandler("fs:showOpenDialog")
   async showOpenDialog(option: OpenDialogOptions) {
     // 使用dialog模块显示打开文件的对话框，并等待用户进行选择
     const result = await dialog.showOpenDialog(option)
@@ -98,7 +99,7 @@ export class FsIpcHandler {
    * @param newDirectoryName 指定要创建的新目录的名称。
    * @returns 如果目录创建成功则返回新目录的完整路径，否则为空字符串。
    */
-  @Handler("fs:createDirectory")
+  @IpcHandler("fs:createDirectory")
   async createDirectory(parentDirectory: string, newDirectoryName: string) {
     try {
       const path = join(parentDirectory, newDirectoryName)
@@ -116,7 +117,7 @@ export class FsIpcHandler {
    * @param option 包含复制操作所需参数的对象，如源文件路径列表、目标文件路径和是否覆盖同名文件的选项。
    * @returns 返回一个Promise数组，每个元素表示一个复制操作的状态。
    */
-  @Handler("fs:copy") async copy(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
+  @IpcHandler("fs:copy") async copy(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
     // 对每个源文件执行复制操作，并等待所有操作完成
     return await Promise.allSettled(
       option.src.map(async (src) => {
@@ -136,7 +137,7 @@ export class FsIpcHandler {
    * @param option 包含移动操作所需参数的对象，如源文件路径列表、目标文件路径和是否覆盖同名文件的选项。
    * @returns 返回一个Promise数组，每个元素表示一个移动操作的状态。
    */
-  @Handler("fs:move") async move(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
+  @IpcHandler("fs:move") async move(option: FsInvokeChannelMap["fs:copy"]["args"][0]) {
     // 对每个源文件执行移动操作，并等待所有操作完成
     return await Promise.allSettled(
       option.src.map(async (src) => {

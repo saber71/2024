@@ -3,7 +3,7 @@
  * 包括设置初始的 Electron API 实例，监听和处理来自 IPC 的消息，
  * 以及提供用于动态获取窗口信息和与 IPC 通信的函数。
  */
-import type { Exposed, SendChannelMap } from "@packages/exposed"
+import type { Exposed, TransferDataToMainChannelMap, TransferDataToRendererChannelMap } from "@packages/exposed"
 import { ref, type Ref, unref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
@@ -39,13 +39,13 @@ export const invoke: Exposed["api"]["invoke"] = async (...args: any[]) => {
  * @param initValue - 响应式数据的初始值。
  * @returns 返回一个响应式变量，其值会随着 IPC 事件的消息更新。
  */
-function hook<Channel extends keyof SendChannelMap, Value extends SendChannelMap[Channel]>(
-  eventName: Channel,
-  initValue: Value
-): Ref<UnwrapRef<Value>> {
+function hook<
+  Channel extends keyof TransferDataToRendererChannelMap,
+  Value extends TransferDataToRendererChannelMap[Channel]
+>(eventName: Channel, initValue: Value): Ref<UnwrapRef<Value>> {
   const result = ref(initValue)
   let gotIt = false
-  listenIpcRenderer(eventName, (value: any) => {
+  listenIpcFromMain(eventName, (value: any) => {
     result.value = value
     gotIt = true
   })
@@ -75,9 +75,25 @@ export const windowInfo = Object.freeze({
  * @param callback - 当接收到 IPC 消息时执行的回调函数。
  * @returns 返回一个函数，调用该函数可取消事件监听。
  */
-export function listenIpcRenderer<Channel extends keyof SendChannelMap>(
+export function listenIpcFromMain<Channel extends keyof TransferDataToRendererChannelMap>(
   channel: Channel,
-  callback: (args: SendChannelMap[Channel]) => void
+  callback: (args: TransferDataToRendererChannelMap[Channel]) => void
 ): () => void {
   return electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
+}
+
+/**
+ * 将数据传输到主进程。
+ *
+ * @param channel - 用于传输数据的通道名称，该通道必须是 `TransferDataToMainChannelMap` 中定义的键。
+ * @param value - 要发送到主进程的数据，其类型取决于指定的通道名称。
+ *
+ * @typeparam Channel - `TransferDataToMainChannelMap` 中的键类型，限定了可以使用的通道名称。
+ */
+export function transferDataToMain<Channel extends keyof TransferDataToMainChannelMap>(
+  channel: Channel,
+  value: TransferDataToMainChannelMap[Channel]
+) {
+  // 通过 electronApi.ipcRenderer 发送数据到主进程。
+  electronApi.ipcRenderer.send(channel, value)
 }

@@ -1,4 +1,8 @@
-import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
+import type {
+  InvokeChannelMap,
+  TransferDataToMainChannelMap,
+  TransferDataToRendererChannelMap
+} from "@packages/exposed"
 import EventEmitter from "eventemitter3"
 import {
   computed,
@@ -40,17 +44,20 @@ const childInstMapKey: InjectionKey<Record<string, VueComponent>> = Symbol("chil
 export const initMutKey = Symbol("init-mut")
 
 export class VueClassMetadata {
-  static invokeFn = (...args: any[]): Promise<any> => Promise.resolve()
-  static listenIpc =
-    (channel: any, callback: any): Function =>
-    () =>
-      0
+  // 只需在渲染进程初始化
+  static invokeFn: (...args: any[]) => Promise<any> = () => Promise.resolve()
+  // 只需在主进程初始化
+  static ipcHandler: (channel: string, callback: Function) => void = () => void 0
+  // 需要在渲染进程和主进程初始化
+  static listenIpc: (channel: string, callback: Function) => Function = () => () => 0
 
   isComponent = false
 
   componentOption?: ComponentOption
 
   isService = false
+
+  isIpc = false
 
   isDirective = false
 
@@ -70,16 +77,24 @@ export class VueClassMetadata {
 
   readonly ipcReceived: {
     propName: string
-    channel: keyof SendChannelMap
+    channel: keyof TransferDataToRendererChannelMap | keyof TransferDataToMainChannelMap
     options?: {
       append?: boolean
       concat?: boolean
     }
   }[] = []
 
-  readonly ipcSync: Array<{ propName: string; channel: keyof InvokeChannelMap }> = []
+  readonly ipcSync: Array<{
+    propName: string
+    channel: keyof InvokeChannelMap | keyof TransferDataToRendererChannelMap
+  }> = []
 
-  readonly ipcListener: { methodName: string; channel: keyof SendChannelMap }[] = []
+  readonly ipcHandlers: { methodName: string; channel: keyof InvokeChannelMap }[] = []
+
+  readonly ipcListener: {
+    methodName: string
+    channel: keyof TransferDataToRendererChannelMap | keyof TransferDataToMainChannelMap
+  }[] = []
 
   readonly throttles: { methodName: string; args: any[] }[] = []
 
@@ -120,6 +135,12 @@ export class VueClassMetadata {
 
   clone() {
     return deepClone(this) as VueClassMetadata
+  }
+
+  handleIpcHandler(instance: any) {
+    for (let handler of this.ipcHandlers) {
+      VueClassMetadata.ipcHandler(handler.channel, instance[handler.methodName].bind(instance))
+    }
   }
 
   handleSetup(instance: any) {
@@ -442,6 +463,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleEventListener(instance)
   metadata.handleIpcReceived(instance)
   metadata.handleIpcSync(instance)
+  metadata.handleIpcHandler(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)

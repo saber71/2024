@@ -1,11 +1,13 @@
-import { ROUTER } from "@packages/vue-class/constants.ts"
-import { VueClass } from "@packages/vue-class/vue-class.ts"
+import { isBrowser } from "@packages/common"
 import type { Router } from "vue-router"
+import { ROUTER } from "./constants.ts"
 import { initMutKey } from "./metadata"
+import { VueClass } from "./vue-class.ts"
 
 export class VueService {
   get router(): Router {
-    return VueClass.getContainer().getValue(ROUTER)
+    if (!isBrowser) throw new Error("router is not available in nodejs side")
+    return VueClass.getValue(ROUTER)
   }
 
   get route() {

@@ -1,7 +1,7 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
+import type { Directory } from "@main/photo.ts"
 import { remove } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
-import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
   EventListener,

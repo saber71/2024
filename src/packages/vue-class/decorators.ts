@@ -1,4 +1,8 @@
-import type { InvokeChannelMap, SendChannelMap } from "@packages/exposed"
+import type {
+  InvokeChannelMap,
+  TransferDataToMainChannelMap,
+  TransferDataToRendererChannelMap
+} from "@packages/exposed"
 import type EventEmitter from "eventemitter3"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
@@ -77,6 +81,32 @@ export function Service(option?: Parameters<typeof Injectable>[0]) {
 }
 
 /*
+ * Ipc 函数用于创建一个服务并将其注册为 IPC (Inter-Process Communication) 服务。
+ * 它接受一个可选参数来配置 Injectable 装饰器的行为，然后返回一个函数，
+ * 该函数用于将服务注册应用到指定的类上。
+ */
+export function Ipc(option?: Parameters<typeof Injectable>[0]) {
+  // 创建一个 Injectable 装饰器函数，配置默认的模块名、单例模式和创建时的元数据处理。
+  const fn = Injectable(
+    Object.assign(
+      {
+        moduleName: ModuleName, // 默认模块名
+        singleton: true, // 默认为单例模式
+        onCreate: (instance: object) => applyMetadata(instance.constructor, instance), // 创建实例时应用元数据
+        createImmediately: true
+      },
+      option // 合并用户自定义的配置
+    )
+  )
+
+  // 返回一个处理函数，用于在类上应用服务注册。
+  return (clazz: Class, ctx?: any) => {
+    fn(clazz, ctx) // 调用@Injectable装饰器函数进行基础注册。
+    getOrCreateMetadata(clazz, ctx).isIpc = true // 标记该类为Ipc。
+  }
+}
+
+/*
  * 为类装饰器创建路由守卫
  * @param option 可选参数对象，用于配置路由守卫的行为
  * @param option.matchTo 可以是一个正则表达式或者一个函数，用于匹配目标路径
@@ -143,36 +173,6 @@ export function Disposable(methodName?: string) {
   return (target: object, arg: any) => {
     const metadata = getOrCreateMetadata(target, arg)
     metadata.disposables.push({ propName: getName(arg), methodName })
-  }
-}
-
-/**
- * 为方法装饰器，用于标记方法为IPC（Inter-Process Communication）的事件监听器。
- * @param channel 指定监听的IPC通道，该通道必须是SendChannelMap中定义的关键字。
- * @returns 返回一个函数，该函数接收两个参数：目标对象和方法名/方法符号，然后将该方法标记为对应的IPC事件监听器。
- */
-export function IpcListener(channel: keyof SendChannelMap) {
-  return (target: object, arg: any) => {
-    const metadata = getOrCreateMetadata(target, arg)
-    metadata.ipcListener.push({ methodName: getName(arg), channel })
-  }
-}
-
-/**
- * 创建一个装饰器，该装饰器可用于在对象初始化时向主进程发送调用请求，然后将结果赋值给被装饰的属性。
- *
- * @param channel - 表示调用的通道名称，该通道名称必须是 `InvokeChannelMap` 中的一个键。
- * @param args - 一个或多个参数，这些参数的类型必须与指定通道在 `InvokeChannelMap` 中定义的参数类型相匹配。
- */
-export function Invoke<Channel extends keyof InvokeChannelMap>(
-  channel: Channel,
-  ...args: InvokeChannelMap[Channel]["args"]
-) {
-  return (target: object, arg: any) => {
-    // 获取或创建目标对象和参数的元数据
-    const metadata = getOrCreateMetadata(target, arg)
-    // 向元数据中添加一个调用记录
-    metadata.invokes.push({ propName: getName(arg), args: [channel, ...args] })
   }
 }
 
@@ -375,14 +375,51 @@ export function Debounce(delay?: number) {
 }
 
 /**
+ * 创建一个装饰器，该装饰器可用于在对象初始化时向主进程发送调用请求，然后将结果赋值给被装饰的属性。
+ * 只适用于渲染进程
+ *
+ * @param channel - 表示调用的通道名称，该通道名称必须是 `InvokeChannelMap` 中的一个键。
+ * @param args - 一个或多个参数，这些参数的类型必须与指定通道在 `InvokeChannelMap` 中定义的参数类型相匹配。
+ */
+export function Invoke<Channel extends keyof InvokeChannelMap>(
+  channel: Channel,
+  ...args: InvokeChannelMap[Channel]["args"]
+) {
+  return (target: object, arg: any) => {
+    // 获取或创建目标对象和参数的元数据
+    const metadata = getOrCreateMetadata(target, arg)
+    // 向元数据中添加一个调用记录
+    metadata.invokes.push({ propName: getName(arg), args: [channel, ...args] })
+  }
+}
+
+/**
+ * 方法装饰器，用于标记方法为IPC（Inter-Process Communication）的事件监听器。
+ * 同时使用于主进程和渲染进程
+ *
+ * @param channel 指定监听的IPC通道
+ * @returns 返回一个函数，该函数接收两个参数：目标对象和方法名/方法符号，然后将该方法标记为对应的IPC事件监听器。
+ */
+export function IpcListener(channel: keyof TransferDataToRendererChannelMap | keyof TransferDataToMainChannelMap) {
+  return (target: object, arg: any) => {
+    const metadata = getOrCreateMetadata(target, arg)
+    metadata.ipcListener.push({ methodName: getName(arg), channel })
+  }
+}
+
+/**
  * 一个装饰器函数，用于标记一个属性用来接收来自指定频道的数据。
- * @param channel 指定的IPC频道，该频道必须是SendChannelMap中的一个键。
+ * 同时使用于主进程和渲染进程
+ * @param channel 指定的IPC频道
  * @param options 可选参数，用于配置消息的处理方式。
  *                - append?: boolean 是否将接收到的消息追加到现有数据中。
  *                - concat?: boolean 是否将接收到的消息与现有数据合并。
  * @returns 返回一个函数，该函数用于作为装饰器应用到类的方法上。
  */
-export function IpcReceived(channel: keyof SendChannelMap, options?: { append?: boolean; concat?: boolean }) {
+export function IpcReceived(
+  channel: keyof TransferDataToRendererChannelMap | keyof TransferDataToMainChannelMap,
+  options?: { append?: boolean; concat?: boolean }
+) {
   return (target: object, arg: any) => {
     // 为指定的属性添加IPC接收元数据
     getOrCreateMetadata(target, arg).ipcReceived.push({
@@ -395,15 +432,32 @@ export function IpcReceived(channel: keyof SendChannelMap, options?: { append?: 
 
 /**
  * 为指定对象的属性添加同步IPC通信的能力。当这个属性发生变化时，会发送一个同步消息到指定的频道。
- * @param channel IPC通信的频道，对应于InvokeChannelMap中的键。
+ * 只适用于渲染进程
+ * @param channel IPC通信的频道，对应于InvokeChannelMap / SendChannelMap中的键。
  * @returns 返回一个装饰器函数，该函数接收目标对象和属性名作为参数，并为该属性添加IPC同步通信的元数据。
  */
-export function IpcSync(channel: keyof InvokeChannelMap) {
+export function IpcSync(channel: keyof InvokeChannelMap | keyof TransferDataToRendererChannelMap) {
   return (target: object, arg: any) => {
     // 为指定对象的属性添加或更新IPC同步通信的元数据
     getOrCreateMetadata(target, arg).ipcSync.push({
       propName: getName(arg), // 获取并记录属性名
       channel // 记录IPC频道
+    })
+  }
+}
+
+/**
+ * 用于创建一个IPC处理函数的装饰器。只适用于主进程
+ * @param channel IPC通信的频道名称，必须是`InvokeChannelMap`中的一个键。
+ * @returns 返回一个函数，该函数接收两个参数：目标对象和方法名。
+ *          用于将指定的方法与IPC频道关联起来，以便于通过该频道调用该方法。
+ */
+export function IpcHandler(channel: keyof InvokeChannelMap) {
+  return (target: object, arg: any) => {
+    // 为指定的目标对象和方法名添加或获取元数据，并将当前的IPC处理信息（频道和方法名）添加到元数据的ipcHandlers数组中
+    getOrCreateMetadata(target, arg).ipcHandlers.push({
+      methodName: getName(arg), // 获取方法名
+      channel // 添加频道信息
     })
   }
 }

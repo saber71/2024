@@ -1,15 +1,11 @@
 import type { electronAPI } from "@electron-toolkit/preload"
-import type { IpcInvokeChannelMap } from "@packages/ipc-handler"
-import type { PhotoSendChannelMap } from "@packages/ipc-handler/photo.ts"
+import type { IpcInvokeChannelMap, TransferDataChannelMap as Map } from "@main/index"
 
-export interface SendChannelMap extends PhotoSendChannelMap {
-  sendWindowId: number
-  "window:isMaximized": boolean
-  "window:isShow": boolean
-  "window:isFocus": boolean
-  "window:isFullscreen": boolean
-  "window:size": [number, number]
+export interface TransferDataToMainChannelMap {
+  ping: number
 }
+
+export interface TransferDataToRendererChannelMap extends Map {}
 
 export interface InvokeChannelMap extends IpcInvokeChannelMap {}
 

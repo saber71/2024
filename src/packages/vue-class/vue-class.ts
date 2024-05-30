@@ -1,33 +1,31 @@
-import { type App, inject, type InjectionKey, provide } from "vue"
+import { type App } from "vue"
 import type { Router } from "vue-router"
 import type { Class } from "../common"
-import { type Container, LoadableContainer } from "../dependency-injection"
+import { LoadableContainer } from "../dependency-injection"
 import { ModuleName, ROUTER } from "./constants"
 import { VueDirective } from "./vue-directive"
 import { VueRouterGuard } from "./vue-router-guard"
 
-const customContainerLabel: InjectionKey<Container> = Symbol("__vue_class__:custom-container")
-
 export class VueClass {
-  static readonly dependencyInjection = new LoadableContainer()
+  private static readonly _dependencyInjection = new LoadableContainer()
 
   static getInstance<T>(clazz: Class<T>): T {
-    return this.getContainer().getValue(clazz)
+    return this.getValue(clazz.name)
   }
 
-  static setCustomContainer(container: Container) {
-    provide(customContainerLabel, container)
+  static getValue<T>(label: string): T {
+    return this._dependencyInjection.getValue(label)
   }
 
-  static getContainer(): Container {
-    return inject(customContainerLabel, this.dependencyInjection) || this.dependencyInjection
+  static load() {
+    this._dependencyInjection.load({ moduleName: ModuleName })
   }
 
   static async install(app: App, router?: Router) {
-    this.dependencyInjection.load({ moduleName: ModuleName })
+    this.load()
     VueDirective.install(app)
     if (router) {
-      this.dependencyInjection.bindValue(ROUTER, router)
+      this._dependencyInjection.bindValue(ROUTER, router)
       VueRouterGuard.install(router)
     }
   }

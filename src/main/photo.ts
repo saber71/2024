@@ -1,8 +1,8 @@
 import { Collection } from "@packages/collection"
 import { isImageExtName, isVideoExtName } from "@packages/common"
-import { createWindow, getImageInfo, type ImageInfo, sendToWeb } from "@packages/electron"
+import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
-import { Handler } from "@packages/ipc-handler/decorator.ts"
+import { Ipc, IpcHandler } from "@packages/vue-class"
 import { app, BrowserWindow, dialog } from "electron"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
@@ -92,7 +92,7 @@ export interface PhotoInvokeChannelMap {
  * 定义了一个PhotoSendChannelMap接口，用于描述照片发送通道的映射关系。
  * 这个映射关系指定了不同的消息类型及其对应的参数。
  */
-export interface PhotoSendChannelMap {
+export interface PhotoTransferDataToRendererChannelMap {
   /**
    * 消息类型 "photo:transferImageInfo"，表示传输图片信息。
    * 参数是一个ImageInfo类型的数组，用于包含多个图片的详细信息。
@@ -114,7 +114,8 @@ interface Directories extends FilterItem {
 }
 
 // 定义一个Photo类，处理照片相关操作，包括打开照片窗口、添加和移除目录、获取所有目录、读取图片信息。
-export class PhotoIpcHandler {
+@Ipc()
+export class PhotoIpc {
   // 创建一个名为"photo"的集合，用于存储目录信息。
   readonly collection = new Collection("photo")
 
@@ -124,7 +125,7 @@ export class PhotoIpcHandler {
   /**
    * 打开一个照片窗口。
    */
-  @Handler("photo:open") open() {
+  @IpcHandler("photo:open") open() {
     // 如果照片窗口已存在，则使其获得焦点，不再创建新窗口
     if (this.photoWindow) {
       this.photoWindow.focus()
@@ -142,7 +143,7 @@ export class PhotoIpcHandler {
    * 添加一个图片目录。
    * @param directories 图片目录的路径。
    */
-  @Handler("photo:updateDirectories")
+  @IpcHandler("photo:updateDirectories")
   async updateDirectories(directories: Directory[]) {
     await this.collection.save<Directories>({
       _id: ALL_DIRECTORIES,
@@ -154,7 +155,7 @@ export class PhotoIpcHandler {
    * 处理选择目录的请求。
    * 该函数通过一个对话框让用户选择一个目录，然后返回该目录的信息
    */
-  @Handler("photo:selectDirectory")
+  @IpcHandler("photo:selectDirectory")
   async selectDirectory(): Promise<PhotoInvokeChannelMap["photo:selectDirectory"]["return"]> {
     // 显示一个打开目录的对话框，并等待用户选择。
     const result = await dialog.showOpenDialog({
@@ -179,7 +180,7 @@ export class PhotoIpcHandler {
    * 获取所有图片目录。
    * @returns 返回目录列表。
    */
-  @Handler("photo:allDirectories")
+  @IpcHandler("photo:allDirectories")
   async allDirectories() {
     let data = await this.collection.getById<Directories>(ALL_DIRECTORIES)
     if (!data) {
@@ -202,7 +203,7 @@ export class PhotoIpcHandler {
    * @param directories 目录列表。
    * @param windowId 窗口ID。
    */
-  @Handler("photo:readImages")
+  @IpcHandler("photo:readImages")
   async allImage(directories: Directory[], windowId: number) {
     // 并行读取所有目录中的图片文件，然后发送图片信息到指定窗口。
     const result = (await getDirectoryImagePaths(directories)).flat()
@@ -215,7 +216,7 @@ export class PhotoIpcHandler {
    * @returns 返回一个Promise，该Promise解析为一个字符串数组，包含目录中图片的路径。
    *          如果目录中没有图片，则对应位置返回空字符串。
    */
-  @Handler("photo:getDirectoryThumbnail")
+  @IpcHandler("photo:getDirectoryThumbnail")
   async getDirectoryThumbnail(directories: Directory[]) {
     // 获取目录中所有图片的路径
     const imagePaths = await getDirectoryImagePaths(directories)
@@ -279,12 +280,12 @@ async function sendImageInfos(windowId: number, filePaths: string[]) {
     const result = await Promise.all(promises)
 
     // 将获取到的图片信息（过滤掉未定义项）发送到Web视图
-    sendToWeb(window, "photo:transferImageInfo", result.filter((item) => !!item) as ImageInfo[])
+    sendDataToWeb(window, "photo:transferImageInfo", result.filter((item) => !!item) as ImageInfo[])
 
     // 更新循环索引，以便下一次循环能够继续从正确的位置开始
     i = j
   }
 
   // 发送图片信息发送结束的信号
-  sendToWeb(window, "photo:transferImageInfoEnd")
+  sendDataToWeb(window, "photo:transferImageInfoEnd")
 }

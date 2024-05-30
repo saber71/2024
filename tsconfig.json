@@ -31,6 +31,7 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/*"],
+      "@main/*": ["src/main/*"],
       "@preload/*": ["src/preload/*"],
       "@packages/*": ["src/packages/*"]
     }

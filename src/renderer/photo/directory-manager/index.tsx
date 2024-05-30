@@ -1,6 +1,6 @@
 import { PlusCircleOutlined } from "@ant-design/icons-vue"
+import type { Directory } from "@main/photo.ts"
 import { Inject } from "@packages/dependency-injection"
-import type { Directory } from "@packages/ipc-handler/photo.ts"
 import {
   BindThis,
   Component,

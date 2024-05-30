@@ -7,7 +7,7 @@ import {
   type VueComponentBaseProps
 } from "@packages/vue-class"
 import TitleBar from "@renderer/components/title-bar"
-import { invoke } from "@renderer/exposed"
+import { invoke, transferDataToMain } from "@renderer/exposed"
 import type { VNodeChild } from "vue"
 import electronSvg from "./assets/electron.svg"
 
@@ -19,6 +19,7 @@ export class IndexInst extends VueComponent<IndexProps> {
 
   @BindThis() handlePing() {
     invoke("ping", "123", 1)
+    transferDataToMain("ping", 1)
   }
 
   @BindThis() handleOpenPhoto() {

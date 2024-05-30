@@ -6,6 +6,7 @@ import swc from "unplugin-swc"
 
 const alias = {
   "@renderer": resolve("src/renderer"),
+  "@main": resolve("src/main"),
   "@preload": resolve("src/preload"),
   "@packages": resolve("src/packages")
 }

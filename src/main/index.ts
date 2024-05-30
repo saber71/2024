@@ -2,17 +2,37 @@ import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
 import { createWindow, RunningAnimal } from "@packages/electron"
-import { IpcHandler } from "@packages/ipc-handler"
-import { app, BrowserWindow, net, protocol, session } from "electron"
+import { VueClass } from "@packages/vue-class"
+import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
+import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
+import "./fs.ts"
+import "./photo.ts"
+import type { FsInvokeChannelMap } from "./fs.ts"
+import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ts"
+import type { WindowInvokeChannelMap } from "./window.ts"
+import "./window.ts"
+import "./ping.ts"
 
 // 设置FFmpeg可执行文件的路径
 ffmpeg.setFfmpegPath(FfmpegPath)
 
 // 设置FFprobe可执行文件的路径
 ffmpeg.setFfprobePath(FfprobePath)
+
+VueClassMetadata.ipcHandler = (channel, callback) => {
+  ipcMain.handle(channel, (event, ...args) => callback(...args, event))
+}
+
+VueClassMetadata.listenIpc = (channel, callback: any) => {
+  ipcMain.on(channel, (event, ...args) => callback(...args, event))
+  return () => ipcMain.off(channel, callback)
+}
+
+// 加载所有已添加vue-class装饰器的类进容器
+VueClass.load()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -73,9 +93,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 注册和初始化ipc事件
-  IpcHandler.install()
-
   // 创建首屏窗口
   createIndexWindow()
 
@@ -104,4 +121,23 @@ function createIndexWindow() {
     // 当此窗口被关闭时，触发应用程序退出
     window.on("closed", () => app.exit())
   })
+}
+
+/**
+ * 定义了一组channel映射，用于规范不同操作的参数和返回值。
+ */
+export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChannelMap, WindowInvokeChannelMap {
+  ping: {
+    args: ["123", 1]
+    return: void
+  }
+}
+
+// 定义一组用于向渲染进程传输数据的channel映射
+export interface TransferDataChannelMap extends PhotoTransferDataToRendererChannelMap {
+  "window:isMaximized": boolean
+  "window:isShow": boolean
+  "window:isFocus": boolean
+  "window:isFullscreen": boolean
+  "window:size": [number, number]
 }
