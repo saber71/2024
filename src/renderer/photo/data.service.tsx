@@ -248,10 +248,10 @@ export class PhotoDataService extends VueService {
    * 无显式返回值，但会修改类成员变量`imageInfos`的顺序。
    */
   @Watcher() sortImageInfos() {
-    if (!this.imageInfos.length) return
     // 获取当前的排序规则
     const order = this.imageSortRule.order
     const asc = this.imageSortRule.asc
+    console.log(this.imageInfos.length)
     this._sortImageInfosImpl(order, asc)
   }
 

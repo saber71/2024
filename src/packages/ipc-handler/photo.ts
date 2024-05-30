@@ -266,7 +266,7 @@ async function sendImageInfos(windowId: number, filePaths: string[]) {
   if (!window) return
 
   // 遍历文件路径数组，分批处理图片信息
-  for (let i = 0; i < filePaths.length; i++) {
+  for (let i = 0; i < filePaths.length; ) {
     let j = i
     const promises: Promise<ImageInfo | undefined>[] = []
 

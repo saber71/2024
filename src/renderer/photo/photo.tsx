@@ -111,7 +111,6 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   }
 
   render(): VNodeChild {
-    const curDirectory = this.dataService.curDirectory
     const imageInfos = this.dataService.imageInfos
     const curItemType = this.dataService.curItemType
 

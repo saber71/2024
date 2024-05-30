@@ -133,7 +133,6 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       if (accWidth > containerWidth) newRow()
       const picture = toPicture.call(this, info)
       const width = picture.width
-      console.log(picture.width, accWidth + width, containerWidth, accWidth + width + this.gap)
       if (row.array.length === 0) {
         row.array.push(picture)
         accWidth += width + this.gap
@@ -141,7 +140,6 @@ export class ImgListInst extends VueComponent<ImgListProps> {
         if (accWidth + width <= containerWidth) {
           row.array.push(picture)
           accWidth += width + this.gap
-          console.log(row.array.length)
         } else {
           row.complete = true
           newRow()
