@@ -69,7 +69,7 @@ export interface FsInvokeChannelMap {
    */
   "fs:rename": {
     args: [string, string] // 参数为一个旧路径, 一个新名字
-    return: { filePath: string; path: string; oldAtomPath: string } | Error // 返回值为新路径。
+    return: { filePath: string; atomPath: string; oldAtomPath: string } | Error // 返回值为新路径。
   }
   /**
    * 将指定内容复制到剪贴板。
@@ -208,7 +208,7 @@ export class FsIpc {
       // 执行重命名操作
       await fsExtra.rename(oldPath, newPath)
       // 返回新的路径
-      return { filePath: newPath, path: toAtomUrl(newPath), oldAtomPath }
+      return { filePath: newPath, atomPath: toAtomUrl(newPath), oldAtomPath }
     } catch (e) {
       return e
     }

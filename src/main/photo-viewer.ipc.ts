@@ -33,8 +33,15 @@ export interface PhotoViewerTransferDataToRendererChannelMap {
 
 @Ipc()
 export class PhotoViewerIpc {
+  /**
+   * 通过@Inject装饰器注入DataService实例
+   * 该注入操作主要用于依赖注入，使得在当前类中可以直接使用dataService实例来调用DataService提供的功能。
+   */
   @Inject() dataService: DataService
 
+  /**
+   * 打开图片查看器窗口
+   */
   @IpcHandler("photo-viewer:open") open() {
     // 如果窗口已存在，则使其获得焦点，不再创建新窗口
     if (this.dataService.photoViewerWindow) {

@@ -35,7 +35,7 @@ export class IndexInst extends VueComponent<IndexProps> {
       <div>
         <TitleBar
           class={"top-0 left-0 w-full bg-white"}
-          title={"Electron"}
+          title={"2024"}
           icon={electronSvg}
           style={{ position: "fixed", color: "black" }}
         />

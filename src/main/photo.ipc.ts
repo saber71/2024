@@ -101,6 +101,10 @@ const ALL_DIRECTORIES = "photo:all_directories"
 
 @Ipc()
 export class PhotoIpc {
+  /**
+   * 通过@Inject装饰器注入DataService实例
+   * 该注入操作主要用于依赖注入，使得在当前类中可以直接使用dataService实例来调用DataService提供的功能。
+   */
   @Inject() dataService: DataService
 
   /**

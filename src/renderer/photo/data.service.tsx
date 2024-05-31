@@ -121,7 +121,7 @@ export class PhotoDataService extends VueService {
                 for (let info of this.imageInfos) {
                   info.filePath = info.filePath.replace(curDirectory.path, newPath.filePath)
                   info.directoryPath = info.directoryPath.replace(curDirectory.path, newPath.filePath)
-                  info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.path)
+                  info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.atomPath)
                 }
                 curDirectory.name = directoryName
                 curDirectory.path = newPath.filePath

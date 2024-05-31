@@ -319,6 +319,9 @@ export function BindThis() {
   }
 }
 
+/**
+ * 被装饰的方法将在实例初始化时执行
+ */
 export function Setup() {
   return (target: object, arg: any) => {
     // 获取或创建目标对象与参数对应的元数据，并将当前方法的名称加入到setup数组中
