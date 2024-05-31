@@ -15,6 +15,7 @@ import {
   Component,
   type ComponentProps,
   Computed,
+  EventListener,
   Mut,
   toNative,
   VueComponent,
@@ -53,7 +54,7 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
     }
   }
 
-  @BindThis() copyOrMoveFiles(type: "复制" | "移动") {
+  @EventListener(photoEventBus, "copyOrMoveFiles") @BindThis() copyOrMoveFiles(type: "复制" | "移动") {
     this.openModal = true
     this.copyOrMove = type
   }

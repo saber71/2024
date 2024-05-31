@@ -26,6 +26,10 @@ export class IndexInst extends VueComponent<IndexProps> {
     invoke("photo:open")
   }
 
+  @BindThis() handlePrint() {
+    window.print()
+  }
+
   render(): VNodeChild {
     return (
       <div>
@@ -51,6 +55,7 @@ export class IndexInst extends VueComponent<IndexProps> {
             <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
               Documentation
             </a>
+            <a onClick={this.handlePrint}>print</a>
             <a target="_blank" rel="noreferrer" onClick={this.handlePing}>
               ping主进程一下
             </a>

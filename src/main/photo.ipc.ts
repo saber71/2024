@@ -207,7 +207,7 @@ export class PhotoIpc {
         // 如果目录中没有图片，则直接返回空字符串
         if (!firstPath) return ""
         // 获取第一个图片的详细信息，然后返回其路径
-        return getImageInfo(firstPath).then((info) => info?.path ?? "")
+        return getImageInfo(firstPath).then((info) => info?.atomPath ?? "")
       })
     )
   }

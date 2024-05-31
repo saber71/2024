@@ -77,12 +77,14 @@ export class PhotoInst extends VueComponent<PhotoProps> {
 
   @BindThis() handleToDirectoryManager() {
     this.dataService.curItemType = this.dataService.asideMenu[2] as any
+    this.dataService.selectedImagePaths.clear()
     this.dataService.selectedAsideKeys = ["directories"]
     this.router.push({ name: DirectoryManager.name })
   }
 
   @BindThis() handleClickMenuItem(val: MenuInfo) {
     this.dataService.curItemType = val.item.originItemValue as any
+    this.dataService.selectedImagePaths.clear()
     this.router.push({ name: ImgList.name })
   }
 

@@ -47,7 +47,7 @@ export class VueClassMetadata {
   static invokeFn: (...args: any[]) => Promise<any> = () => Promise.resolve()
   // 只需在主进程初始化. 在ipcMain上调用handle监听channel
   static ipcHandler: (channel: string, callback: Function) => void = () => void 0
-  // 需要在渲染进程和主进程初始化. 在ipcMain或ipcRenderer上监听事件
+  // 需要在渲染进程和主进程初始化. 在ipcMain或ipcRenderer上调用on监听事件
   static listenIpc: (channel: string, callback: Function) => Function = () => () => 0
 
   isComponent = false

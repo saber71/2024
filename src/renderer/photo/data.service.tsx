@@ -1,6 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { Directory } from "@main/photo.ipc.ts"
-import { remove } from "@packages/common"
+import { listen, remove } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
   BindThis,
@@ -19,6 +19,7 @@ import { Input, type ItemType, Modal, notification } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import EventEmitter from "eventemitter3"
 import type { OverlayScrollbars } from "overlayscrollbars"
+import Printd from "printd"
 import { h, ref, type VNode } from "vue"
 
 type SortOrder = "birthtimeMs" | "mtimeMs" | "name"
@@ -32,6 +33,7 @@ export const photoEventBus = new EventEmitter<{
   selectAll: () => void
   unselectAll: () => void
   updateRows: () => void
+  copyOrMoveFiles: (type: "复制" | "移动") => void
 }>()
 
 /**
@@ -98,11 +100,10 @@ export class PhotoDataService extends VueService {
       onClick: () => {
         this.showContextmenu = false
         if (this.curDirectory) {
-          let directoryName = ""
+          let directoryName = this.curDirectory.name
           Modal.confirm({
             title: "重命名文件夹",
             centered: true,
-            okText: "新建",
             content: () => (
               <Input
                 value={directoryName}
@@ -113,9 +114,22 @@ export class PhotoDataService extends VueService {
             onOk: async () => {
               if (!directoryName) return Promise.reject("directory name is empty!")
               const curDirectory = this.curDirectory!
-              curDirectory.name = directoryName
-              this.allDirectories = this.allDirectories.slice()
-              return Promise.resolve()
+              if (directoryName === curDirectory.name) return
+              const newPath = await invoke("fs:rename", curDirectory.path, directoryName)
+              if ("filePath" in newPath) {
+                this.allDirectories = this.allDirectories.slice()
+                for (let info of this.imageInfos) {
+                  info.filePath = info.filePath.replace(curDirectory.path, newPath.filePath)
+                  info.directoryPath = info.directoryPath.replace(curDirectory.path, newPath.filePath)
+                  info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.path)
+                }
+                curDirectory.name = directoryName
+                curDirectory.path = newPath.filePath
+                return
+              } else {
+                notification.error({ message: newPath.message })
+                return Promise.reject(newPath)
+              }
             }
           })
         }
@@ -137,7 +151,7 @@ export class PhotoDataService extends VueService {
     {
       label: "删除文件夹",
       key: "remove-directory",
-      class: "directory-contextmenu-remove",
+      class: "contextmenu-remove",
       onClick: () => {
         this.showContextmenu = false
         if (this.curDirectory) {
@@ -147,6 +161,141 @@ export class PhotoDataService extends VueService {
             onOk: () => {
               remove(this.allDirectories, this.curDirectory)
               this.allDirectories = this.allDirectories.slice()
+            },
+            centered: true,
+            okText: "删除"
+          })
+        }
+      }
+    },
+    {
+      label: "开始幻灯片放映",
+      key: "play-slide",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curDirectory) {
+          this.startSlide(this.curDirectory.path)
+        }
+      }
+    }
+  ]
+
+  // 图片的右键菜单
+  readonly imageContextmenu: ItemType[] = [
+    {
+      label: "打开",
+      key: "open",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) this.openImage(this.curImageInfo)
+      }
+    },
+    {
+      label: "编辑",
+      key: "edit"
+    },
+    {
+      label: "开始幻灯片放映",
+      key: "play-slide",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curDirectory) {
+          this.startSlide(this.curDirectory.path)
+        }
+      }
+    },
+    {
+      label: "打印",
+      key: "print",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) {
+          new Printd().print(document.getElementById("image-" + this.curImageInfo.ino)!)
+        }
+      }
+    },
+    {
+      label: "复制",
+      key: "copy"
+    },
+    {
+      label: "复制为路径",
+      key: "copy-path",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) invoke("fs:copyIntoClipboard", this.curImageInfo.filePath)
+      }
+    },
+    {
+      label: "移动/复制",
+      key: "move/copy",
+      children: [
+        {
+          label: "复制到文件夹",
+          key: "copy-to-directory",
+          onClick: () => photoEventBus.emit("copyOrMoveFiles", "复制")
+        },
+        {
+          label: "移动到文件夹",
+          key: "move-to-directory",
+          onClick: () => photoEventBus.emit("copyOrMoveFiles", "移动")
+        }
+      ]
+    },
+    {
+      label: "重命名",
+      key: "rename",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) {
+          let newName = this.curImageInfo.nameWithoutExt
+          Modal.confirm({
+            title: "重命名图片",
+            centered: true,
+            content: () => (
+              <Input value={newName} onUpdate:value={(val) => (newName = val)} placeholder={"请输入图片的新名字"} />
+            ),
+            onOk: async () => {
+              if (!newName) return Promise.reject("image name is empty!")
+              if (newName === this.curImageInfo!.nameWithoutExt) return
+              const imageInfo = this.curImageInfo!
+              const newPath = await invoke("fs:rename", imageInfo.filePath, imageInfo.name)
+              if ("filePath" in newPath) {
+                imageInfo.nameWithoutExt = newName
+                imageInfo.name = newName + "." + imageInfo.extName
+                Object.assign(imageInfo, newPath)
+                this.sortImageInfos()
+                return
+              } else {
+                notification.error({ message: newPath.message })
+                return Promise.reject(newPath)
+              }
+            }
+          })
+        }
+      }
+    },
+    {
+      type: "divider"
+    },
+    {
+      label: "删除",
+      key: "remove",
+      class: "contextmenu-remove",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) {
+          Modal.confirm({
+            title: "删除图片",
+            content: `是否删除图片${this.curImageInfo.name}？`,
+            onOk: () => {
+              invoke("fs:rm", this.curImageInfo!.filePath).then((result) => {
+                if (result) notification.error({ message: result })
+                else {
+                  remove(this.imageInfos, this.curImageInfo)
+                  this.selectedImagePaths.delete(this.curImageInfo!.atomPath)
+                }
+              })
             },
             centered: true,
             okText: "删除"
@@ -167,6 +316,8 @@ export class PhotoDataService extends VueService {
 
   // 当前目录对象，用于存储当前选择的目录信息
   @Mut(true) curDirectory?: Directory
+
+  @Mut(true) curImageInfo?: ImageInfo
 
   // 当前选中的菜单项
   @Mut() curItemType?: { label: string; icon: VNode }
@@ -229,6 +380,28 @@ export class PhotoDataService extends VueService {
   // 选中的图片地址集合
   @Mut() selectedImagePaths = new Set<string>()
 
+  async startSlide(directoryPath: string) {
+    const imageInfos = this.imageInfos.filter((i) => i.directoryPath === directoryPath)
+    if (imageInfos.length === 0) {
+      notification.warn({
+        message: "无可播放图片"
+      })
+    } else {
+      await invoke("photo-viewer:setSlideImageInfos", imageInfos)
+      invoke("photo-viewer:open")
+    }
+  }
+
+  /**
+   * 异步打开图片
+   * @param info 图片信息对象，包含图片的各种详细信息
+   * 该函数首先会设置当前图片信息，然后打开图片查看器
+   */
+  async openImage(info: ImageInfo) {
+    await invoke("photo-viewer:setCurImageInfo", info) // 设置当前图片信息
+    invoke("photo-viewer:open") // 打开图片查看器
+  }
+
   /**
    * 选择图像
    * @param pic 可以是ImageInfo类型或包含ImageInfo的物体。如果传入的是一个包含ImageInfo的对象，函数会使用该对象的info属性。
@@ -240,7 +413,7 @@ export class PhotoDataService extends VueService {
     // 如果不允许多选，则清除之前的图像选择
     if (!multi) this.selectedImagePaths.clear()
     // 添加选定图像的路径到集合中
-    this.selectedImagePaths.add(pic.path)
+    this.selectedImagePaths.add(pic.atomPath)
   }
 
   /**
@@ -252,7 +425,7 @@ export class PhotoDataService extends VueService {
     // 获取当前的排序规则
     const order = this.imageSortRule.order
     const asc = this.imageSortRule.asc
-    console.log(this.imageInfos.length)
+    listen(this.imageInfos.length)
     this._sortImageInfosImpl(order, asc)
   }
 
@@ -271,7 +444,7 @@ export class PhotoDataService extends VueService {
   @EventListener(photoEventBus, "selectAll") handleSelectAllImage() {
     // 遍历图片信息列表，将每张图片的路径添加到已选择图片路径的集合中
     for (let info of this.imageInfos) {
-      this.selectedImagePaths.add(info.path)
+      this.selectedImagePaths.add(info.atomPath)
     }
   }
 
@@ -387,8 +560,8 @@ export class PhotoDataService extends VueService {
         // 若操作成功，则更新图片路径，并在imageInfos中查找对应图片信息进行路径更新
         const oldImagePath = imagePaths[index]
         const newImagePath = res.value
-        const imageInfo = this.imageInfos.find((info) => info.path === oldImagePath)
-        if (imageInfo) imageInfo.path = newImagePath
+        const imageInfo = this.imageInfos.find((info) => info.atomPath === oldImagePath)
+        if (imageInfo) imageInfo.atomPath = newImagePath
         imagePaths[index] = newImagePath
       }
 

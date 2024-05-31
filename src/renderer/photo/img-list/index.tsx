@@ -165,8 +165,8 @@ export class ImgListInst extends VueComponent<ImgListProps> {
         height,
         fullyClick: fullyClick(
           200,
-          () => this.scaledPictures.add(pic.info.path),
-          () => this.scaledPictures.delete(pic.info.path)
+          () => this.scaledPictures.add(pic.info.atomPath),
+          () => this.scaledPictures.delete(pic.info.atomPath)
         )
       }
       return pic
@@ -174,8 +174,19 @@ export class ImgListInst extends VueComponent<ImgListProps> {
   }
 
   @BindThis() handleClickCheckbox(val: boolean, pic: Picture) {
-    if (!val) this.dataService.selectedImagePaths.delete(pic.info.path)
+    if (!val) this.dataService.selectedImagePaths.delete(pic.info.atomPath)
     else this.dataService.selectImage(pic, true)
+  }
+
+  @BindThis() handleShowImageContextmenu(e: MouseEvent, pic: Picture) {
+    this.dataService.showContextmenu = true
+    this.dataService.contextmenuPos = {
+      left: e.clientX + "px",
+      top: e.clientY + "px"
+    }
+    this.dataService.curContextmenu = this.dataService.imageContextmenu
+    this.dataService.curImageInfo = pic.info
+    this.dataService.selectImage(pic, false)
   }
 
   render(): VNodeChild {
@@ -195,14 +206,14 @@ export class ImgListInst extends VueComponent<ImgListProps> {
               align={"center"}
               style={{ top: (this.gap + this.rowHeight) * index + 8 + "px", width: "calc(100% - 16px)" }}
             >
-              {row.array.map((pic) => {
-                const checked = this.dataService.selectedImagePaths.has(pic.info.path)
+              {row.array.map((pic, i) => {
+                const checked = this.dataService.selectedImagePaths.has(pic.info.atomPath)
                 return (
                   <div
                     class={[
                       "picture relative bg-gray-100 flex-shrink-0 box-shadow-hover transition box-border",
                       checked ? "checked-picture" : "",
-                      !this.scaledPictures.has(pic.info.path) ? "" : "picture-mousedown"
+                      !this.scaledPictures.has(pic.info.atomPath) ? "" : "picture-mousedown"
                     ]}
                     style={{
                       width: pic.width + "px",
@@ -213,10 +224,12 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                     onMousedown={pic.fullyClick.onMousedown}
                     onMouseup={pic.fullyClick.onMouseup}
                     onMouseleave={pic.fullyClick.onMouseup}
+                    onContextmenu={(e) => this.handleShowImageContextmenu(e, pic)}
                   >
                     <img
+                      id={`image-${pic.info.ino}`}
                       class={"block object-cover object-center"}
-                      src={pic.info.path}
+                      src={pic.info.atomPath}
                       style={{ width: "100%", height: pic.height + "px" }}
                       loading={"lazy"}
                       title={pic.info.name}

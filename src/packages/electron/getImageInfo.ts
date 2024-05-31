@@ -3,7 +3,7 @@ import { toAtomUrl } from "@packages/electron/toAtomUrl.ts"
 import ffmpeg from "fluent-ffmpeg"
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
-import { basename, extname, resolve } from "node:path"
+import { basename, dirname, extname, resolve } from "node:path"
 import { promisify } from "node:util"
 import { createThumbnail } from "./createThumbnail"
 
@@ -15,11 +15,13 @@ const sizeOf = promisify(imageSize)
  */
 export interface ImageInfo extends Stats {
   name: string
+  nameWithoutExt: string
   extName: string
   width: number
   height: number
-  path: string //如果是视频的话此处是缩略图atom地址，否则是图片atom地址
+  atomPath: string //如果是视频的话此处是缩略图atom地址，否则是图片atom地址
   filePath: string
+  directoryPath: string
 }
 
 /**
@@ -48,16 +50,18 @@ export async function getImageInfo(path: string) {
   result.width = size.width
   result.height = size.height
   result.extName = extName
-  result.path = toAtomUrl(absolutePath)
+  result.atomPath = toAtomUrl(absolutePath)
   result.filePath = absolutePath
   result.name = basename(absolutePath)
+  result.nameWithoutExt = result.name.replace(new RegExp(`\.${extName}$`), "")
+  result.directoryPath = dirname(absolutePath)
 
   // 如果文件扩展名为视频，则创建缩略图
   if (isVideoExtName(extName)) {
     // 创建缩略图，并获取其路径
     const thumbnailPath = await createThumbnail(absolutePath)
     // 将缩略图路径设置到结果对象中的 path 属性
-    result.path = toAtomUrl(thumbnailPath)
+    result.atomPath = toAtomUrl(thumbnailPath)
   }
 
   return result

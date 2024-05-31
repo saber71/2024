@@ -1,10 +1,10 @@
 import { extractFilePathFromAtomUrl, toAtomUrl } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { Ipc, IpcHandler } from "@packages/vue-class"
-import { dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
+import { clipboard, dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
 import fsExtra from "fs-extra"
 import { promises } from "node:fs"
-import { basename } from "node:path"
+import { basename, dirname } from "node:path"
 import { join } from "path"
 
 export interface FsInvokeChannelMap {
@@ -50,6 +50,35 @@ export interface FsInvokeChannelMap {
   "fs:move": {
     args: [{ src: string[]; dest: string; overwriteAsSameName: boolean }]
     return: PromiseSettledResult<string>[]
+  }
+  /**
+   * 删除文件或目录
+   *
+   * @param args {string} 需要删除的文件或目录的路径
+   * @return {string | undefined} 执行成功时返回undefined，失败时返回失败的原因。
+   */
+  "fs:rm": {
+    args: [string]
+    return: string | undefined
+  }
+
+  /**
+   * 重命名文件或目录。
+   * @param oldPath 原文件或目录的路径。
+   * @return 返回新路径字符串。
+   */
+  "fs:rename": {
+    args: [string, string] // 参数为一个旧路径, 一个新名字
+    return: { filePath: string; path: string; oldAtomPath: string } | Error // 返回值为新路径。
+  }
+  /**
+   * 将指定内容复制到剪贴板。
+   * @param {string} args - 需要复制到剪贴板的文本或数据。
+   * @return {void} 无返回值。
+   */
+  "fs:copyIntoClipboard": {
+    args: [string]
+    return: void
   }
 }
 
@@ -147,6 +176,46 @@ export class FsIpc {
         return toAtomUrl(dest)
       })
     )
+  }
+
+  /**
+   * 从文件系统中删除指定路径的文件或目录。
+   * @param path 要删除的文件或目录的路径。
+   * @returns 返回一个Promise，若删除成功则解析为undefined，若删除失败则解析为错误信息字符串。
+   */
+  @IpcHandler("fs:rm") async rm(path: string) {
+    // 使用fsExtra的rm方法递归删除指定路径，捕获任何异常并返回异常信息
+    try {
+      return await fsExtra.rm(path, { recursive: true })
+    } catch (e) {
+      return (e as Error).message
+    }
+  }
+
+  /**
+   * 重命名文件或目录。
+   * @param oldPath 原文件或目录的路径，可以为Atom URL格式，需要转换为真实路径。
+   * @param newName 新的文件或目录名。
+   * @returns 返回新的文件或目录路径。
+   */
+  @IpcHandler("fs:rename") async rename(oldPath: string, newName: string) {
+    const oldAtomPath = toAtomUrl(oldPath)
+    // 从Atom URL格式的路径中提取真实的文件路径
+    oldPath = extractFilePathFromAtomUrl(oldPath)
+    // 构造新的文件或目录路径
+    const newPath = join(dirname(oldPath), newName)
+    try {
+      // 执行重命名操作
+      await fsExtra.rename(oldPath, newPath)
+      // 返回新的路径
+      return { filePath: newPath, path: toAtomUrl(newPath), oldAtomPath }
+    } catch (e) {
+      return e
+    }
+  }
+
+  @IpcHandler("fs:copyIntoClipboard") copyIntoClipboard(arg: string) {
+    clipboard.writeText(arg, "clipboard")
   }
 }
 
