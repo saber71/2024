@@ -1,5 +1,5 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
-import type { Directory } from "@main/photo.ts"
+import type { Directory } from "@main/photo.ipc.ts"
 import { remove } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
@@ -126,6 +126,7 @@ export class PhotoDataService extends VueService {
       key: "open-directory",
       onClick: () => {
         if (this.curDirectory) {
+          this.showContextmenu = false
           invoke("fs:showItemInFolder", this.curDirectory.path)
         }
       }

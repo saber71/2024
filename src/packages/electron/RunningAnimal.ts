@@ -53,8 +53,9 @@ export class RunningAnimal {
   show() {
     if (!this.tray) {
       this.tray = new Tray(this._activeImages[0].nativeImage)
-      this.tray.setToolTip("222")
     }
+    const cpuUsage = process.getCPUUsage()
+    this.tray.setToolTip("CPU使用率：" + (cpuUsage.percentCPUUsage * 100).toFixed(2) + "%")
     this._curImageIndex = (this._curImageIndex + 1) % this._activeImages.length
     this.tray.setImage(this._activeImages[this._curImageIndex].nativeImage)
     if (!this._handler) this._handler = setInterval(this.show, this._intervalTime)

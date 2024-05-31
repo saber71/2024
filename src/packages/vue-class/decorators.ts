@@ -456,7 +456,7 @@ export function IpcHandler(channel: keyof InvokeChannelMap) {
   return (target: object, arg: any) => {
     // 为指定的目标对象和方法名添加或获取元数据，并将当前的IPC处理信息（频道和方法名）添加到元数据的ipcHandlers数组中
     getOrCreateMetadata(target, arg).ipcHandlers.push({
-      methodName: getName(arg), // 获取方法名
+      methodOrProp: getName(arg), // 获取方法或属性名
       channel // 添加频道信息
     })
   }

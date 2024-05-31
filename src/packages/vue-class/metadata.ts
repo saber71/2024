@@ -29,8 +29,7 @@ import {
   type WatchOptions
 } from "vue"
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from "vue-router"
-import type { Class } from "../common"
-import { debounce, deepClone, throttle } from "../common"
+import { type Class, debounce, deepClone, throttle } from "../common"
 import { type HookType, type WatcherTarget } from "./decorators"
 import { VueComponent } from "./vue-component"
 import { VueDirective } from "./vue-directive"
@@ -44,11 +43,11 @@ const childInstMapKey: InjectionKey<Record<string, VueComponent>> = Symbol("chil
 export const initMutKey = Symbol("init-mut")
 
 export class VueClassMetadata {
-  // 只需在渲染进程初始化
+  // 只需在渲染进程初始化. 调用invoke发送channel给主进程
   static invokeFn: (...args: any[]) => Promise<any> = () => Promise.resolve()
-  // 只需在主进程初始化
+  // 只需在主进程初始化. 在ipcMain上调用handle监听channel
   static ipcHandler: (channel: string, callback: Function) => void = () => void 0
-  // 需要在渲染进程和主进程初始化
+  // 需要在渲染进程和主进程初始化. 在ipcMain或ipcRenderer上监听事件
   static listenIpc: (channel: string, callback: Function) => Function = () => () => 0
 
   isComponent = false
@@ -89,7 +88,7 @@ export class VueClassMetadata {
     channel: keyof InvokeChannelMap | keyof TransferDataToRendererChannelMap
   }> = []
 
-  readonly ipcHandlers: { methodName: string; channel: keyof InvokeChannelMap }[] = []
+  readonly ipcHandlers: { methodOrProp: string; channel: keyof InvokeChannelMap }[] = []
 
   readonly ipcListener: {
     methodName: string
@@ -139,7 +138,10 @@ export class VueClassMetadata {
 
   handleIpcHandler(instance: any) {
     for (let handler of this.ipcHandlers) {
-      VueClassMetadata.ipcHandler(handler.channel, instance[handler.methodName].bind(instance))
+      let fn: Function
+      if (typeof instance[handler.methodOrProp] === "function") fn = instance[handler.methodOrProp].bind(instance)
+      else fn = () => instance[handler.methodOrProp]
+      VueClassMetadata.ipcHandler(handler.channel, fn)
     }
   }
 

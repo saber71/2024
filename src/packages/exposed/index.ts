@@ -1,11 +1,11 @@
 import type { electronAPI } from "@electron-toolkit/preload"
-import type { IpcInvokeChannelMap, TransferDataChannelMap as Map } from "@main/index"
+import type { IpcInvokeChannelMap, TransferDataChannelMap } from "@main/index"
 
 export interface TransferDataToMainChannelMap {
   ping: number
 }
 
-export interface TransferDataToRendererChannelMap extends Map {}
+export interface TransferDataToRendererChannelMap extends TransferDataChannelMap {}
 
 export interface InvokeChannelMap extends IpcInvokeChannelMap {}
 

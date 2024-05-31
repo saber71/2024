@@ -3,8 +3,8 @@
  * 通过判断全局 `process` 对象是否存在以及 `process.nextTick` 方法是否为函数来判断。
  */
 
-const process = global.process
-export const isBrowser = process && typeof process.nextTick === "function"
+const process = globalThis.process
+export const isBrowser = !(process && typeof process.nextTick === "function")
 
 // 在 Node.js 环境中，`process` 是全局对象且提供了 `nextTick` 方法，
 // 而在大多数浏览器环境中，`process` 未定义或不提供 `nextTick` 方法。

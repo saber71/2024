@@ -8,7 +8,7 @@ import {
   RightCircleOutlined,
   SortAscendingOutlined
 } from "@ant-design/icons-vue"
-import type { Directory } from "@main/photo.ts"
+import type { Directory } from "@main/photo.ipc.ts"
 import { Inject } from "@packages/dependency-injection"
 import {
   BindThis,

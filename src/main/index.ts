@@ -1,6 +1,10 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
+import type {
+  PhotoViewerInvokeChannelMap,
+  PhotoViewerTransferDataToRendererChannelMap
+} from "@main/photo-viewer.ipc.ts"
 import { createWindow, RunningAnimal } from "@packages/electron"
 import { VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
@@ -8,13 +12,14 @@ import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
-import "./fs.ts"
-import "./photo.ts"
-import type { FsInvokeChannelMap } from "./fs.ts"
-import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ts"
-import type { WindowInvokeChannelMap } from "./window.ts"
-import "./window.ts"
-import "./ping.ts"
+import "./fs.ipc.ts"
+import "./photo.ipc.ts"
+import type { FsInvokeChannelMap } from "./fs.ipc.ts"
+import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ipc.ts"
+import type { WindowInvokeChannelMap } from "./window.ipc.ts"
+import "./window.ipc.ts"
+import "./ping.ipc.ts"
+import "./data.service.ts"
 
 // 设置FFmpeg可执行文件的路径
 ffmpeg.setFfmpegPath(FfmpegPath)
@@ -126,7 +131,11 @@ function createIndexWindow() {
 /**
  * 定义了一组channel映射，用于规范不同操作的参数和返回值。
  */
-export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChannelMap, WindowInvokeChannelMap {
+export interface IpcInvokeChannelMap
+  extends PhotoInvokeChannelMap,
+    FsInvokeChannelMap,
+    WindowInvokeChannelMap,
+    PhotoViewerInvokeChannelMap {
   ping: {
     args: ["123", 1]
     return: void
@@ -134,7 +143,9 @@ export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChan
 }
 
 // 定义一组用于向渲染进程传输数据的channel映射
-export interface TransferDataChannelMap extends PhotoTransferDataToRendererChannelMap {
+export interface TransferDataChannelMap
+  extends PhotoTransferDataToRendererChannelMap,
+    PhotoViewerTransferDataToRendererChannelMap {
   "window:isMaximized": boolean
   "window:isShow": boolean
   "window:isFocus": boolean

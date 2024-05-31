@@ -6,7 +6,7 @@ import { join } from "path"
 import icon from "../../../resources/icon.png"
 
 export interface CreateWindowOptions extends BrowserWindowConstructorOptions {
-  html: "index" | "photo"
+  html: "index" | "photo" | "photo-viewer"
   maximize?: boolean
 }
 

@@ -1,5 +1,6 @@
-import { Collection } from "@packages/collection"
+import { DataService } from "@main/data.service.ts"
 import { isImageExtName, isVideoExtName } from "@packages/common"
+import { Inject } from "@packages/dependency-injection"
 import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
 import { Ipc, IpcHandler } from "@packages/vue-class"
@@ -8,23 +9,17 @@ import { promises } from "node:fs"
 import { basename, extname } from "node:path"
 import { join } from "path"
 
-/**
- * Directory 接口定义了一个目录的基本属性。
- *
- * @property {string} name - 目录的名称。
- * @property {string} path - 目录的路径。
- * @property {Directory[]} children - 子目录
- */
+// 定义了一个目录的基本属性
 export interface Directory {
-  name: string
-  path: string
-  thumbnail: string
+  name: string //目录的名称
+  path: string //目录的路径
+  thumbnail: string //缩略图atom地址
 }
 
-/**
- * 定义与照片操作相关的调用渠道映射。
- * 提供了一系列照片管理功能的接口定义，包括打开照片、获取所有目录、添加和移除目录、读取图片等。
- */
+interface Directories extends FilterItem {
+  array: Directory[]
+}
+
 export interface PhotoInvokeChannelMap {
   /**
    * 打开照片应用或界面。
@@ -88,10 +83,6 @@ export interface PhotoInvokeChannelMap {
   }
 }
 
-/**
- * 定义了一个PhotoSendChannelMap接口，用于描述照片发送通道的映射关系。
- * 这个映射关系指定了不同的消息类型及其对应的参数。
- */
 export interface PhotoTransferDataToRendererChannelMap {
   /**
    * 消息类型 "photo:transferImageInfo"，表示传输图片信息。
@@ -106,36 +97,26 @@ export interface PhotoTransferDataToRendererChannelMap {
   "photo:transferImageInfoEnd": void
 }
 
-const ALL_DIRECTORIES = "all_directories"
+const ALL_DIRECTORIES = "photo:all_directories"
 
-// 从集合中获取或创建包含所有目录的记录，并返回目录数组。
-interface Directories extends FilterItem {
-  array: Directory[]
-}
-
-// 定义一个Photo类，处理照片相关操作，包括打开照片窗口、添加和移除目录、获取所有目录、读取图片信息。
 @Ipc()
 export class PhotoIpc {
-  // 创建一个名为"photo"的集合，用于存储目录信息。
-  readonly collection = new Collection("photo")
-
-  // 照片窗口的对象
-  photoWindow?: BrowserWindow
+  @Inject() dataService: DataService
 
   /**
    * 打开一个照片窗口。
    */
   @IpcHandler("photo:open") open() {
     // 如果照片窗口已存在，则使其获得焦点，不再创建新窗口
-    if (this.photoWindow) {
-      this.photoWindow.focus()
+    if (this.dataService.photoWindow) {
+      this.dataService.photoWindow.focus()
       return
     }
     // 创建一个新窗口用于显示照片，配置包括无边框、最大化、最小宽度和高度
     createWindow({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 }).then((window) => {
-      this.photoWindow = window
+      this.dataService.photoWindow = window
       // 当窗口关闭时，重置photoWindow的引用，防止其泄露
-      window.on("closed", () => (this.photoWindow = undefined))
+      window.on("closed", () => (this.dataService.photoWindow = undefined))
     })
   }
 
@@ -145,7 +126,7 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:updateDirectories")
   async updateDirectories(directories: Directory[]) {
-    await this.collection.save<Directories>({
+    await this.dataService.collection.save<Directories>({
       _id: ALL_DIRECTORIES,
       array: directories
     })
@@ -182,12 +163,12 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:allDirectories")
   async allDirectories() {
-    let data = await this.collection.getById<Directories>(ALL_DIRECTORIES)
+    let data = await this.dataService.collection.getById<Directories>(ALL_DIRECTORIES)
     if (!data) {
       // 如果记录不存在，则创建一个包含图片路径的记录。
       const picturePath = app.getPath("pictures")
       const directoryName = basename(picturePath)
-      const array = await this.collection.save<Directories>({
+      const array = await this.dataService.collection.save<Directories>({
         array: [{ name: directoryName, path: picturePath, thumbnail: "" }],
         _id: ALL_DIRECTORIES
       })
