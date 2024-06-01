@@ -13,7 +13,6 @@ import { join } from "path"
 export interface Directory {
   name: string //目录的名称
   path: string //目录的路径
-  thumbnail: string //缩略图atom地址
 }
 
 interface Directories extends FilterItem {
@@ -150,14 +149,10 @@ export class PhotoIpc {
     // 如果用户选择了目录，则处理选择的目录。
     if (result.filePaths.length) {
       // 创建一个包含目录路径和名称的对象。
-      const dir: Directory = {
+      return {
         path: result.filePaths[0],
-        name: basename(result.filePaths[0]),
-        thumbnail: ""
+        name: basename(result.filePaths[0])
       }
-      const thumbnails = await this.getDirectoryThumbnail([dir])
-      dir.thumbnail = thumbnails[0]
-      return dir
     }
   }
 
@@ -173,13 +168,11 @@ export class PhotoIpc {
       const picturePath = app.getPath("pictures")
       const directoryName = basename(picturePath)
       const array = await this.dataService.collection.save<Directories>({
-        array: [{ name: directoryName, path: picturePath, thumbnail: "" }],
+        array: [{ name: directoryName, path: picturePath }],
         _id: ALL_DIRECTORIES
       })
       data = array[0]
     }
-    const thumbnails = await this.getDirectoryThumbnail(data.array)
-    thumbnails.forEach((thumbnail, index) => (data.array[index].thumbnail = thumbnail))
     return data.array
   }
 

@@ -95,7 +95,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
       size = Math.floor((containerWidth - this.gap * (cols - 1)) / cols)
     }
     this.rowHeight = size
-    const imageInfos = this.dataService.imageInfos
+    const imageInfos = this.dataService.curImageInfos
     // 这里必须要确保访问到imageInfos的属性，否则vue会监听不到
     if (!imageInfos.length || !this.imgContainerEl) {
       this.rowPictures = []
@@ -127,7 +127,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     }
     rows.push(row)
     let accWidth = 0
-    for (let info of this.dataService.imageInfos) {
+    for (let info of this.dataService.curImageInfos) {
       if (this.filterType === "image" && !isImageExtName(info.extName)) continue
       if (this.filterType === "video" && !isVideoExtName(info.extName)) continue
       if (accWidth > containerWidth) newRow()

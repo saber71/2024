@@ -1,6 +1,7 @@
 import { extractFilePathFromAtomUrl, toAtomUrl } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { Ipc, IpcHandler } from "@packages/vue-class"
+import clipboardFiles from "clipboard-files"
 import { clipboard, dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
 import fsExtra from "fs-extra"
 import { promises } from "node:fs"
@@ -78,6 +79,15 @@ export interface FsInvokeChannelMap {
    */
   "fs:copyIntoClipboard": {
     args: [string]
+    return: void
+  }
+  /**
+   * 将文件路径复制到剪贴板。
+   * @param {string[]} args - 需要复制到剪贴板的文件路径。
+   * @return {void} 无返回值。
+   */
+  "fs:copyFilesIntoClipboard": {
+    args: [string[]]
     return: void
   }
 }
@@ -216,6 +226,10 @@ export class FsIpc {
 
   @IpcHandler("fs:copyIntoClipboard") copyIntoClipboard(arg: string) {
     clipboard.writeText(arg, "clipboard")
+  }
+
+  @IpcHandler("fs:copyFilesIntoClipboard") copyFilesIntoClipboard(filePaths: string[]) {
+    clipboardFiles.writeFiles(filePaths)
   }
 }
 

@@ -31,14 +31,14 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
       top: e.clientY + "px"
     }
     this.dataService.curContextmenu = this.dataService.directoryContextmenu
-    this.dataService.curDirectory = dir
+    this.dataService.setCurDirectory(dir)
   }
 
   @BindThis() handleClickDirectory(dir: Directory) {
     const key = KEY_PREFIX + dir.path
     this.dataService.selectedAsideKeys = [key]
     this.dataService.curItemType = this.dataService.findMenuItem(key) as any
-    this.dataService.curDirectory = this.dataService.findDirectory(dir.path)
+    this.dataService.setCurDirectory(this.dataService.findDirectory(dir.path))
     this.router.push({ name: ImgList.name })
   }
 
@@ -56,7 +56,7 @@ export class DirectoryManagerInst extends VueComponent<DirectoryManagerProps> {
             onClick={() => this.handleClickDirectory(dir)}
           >
             <img class={"icon"} src={directoryImg} />
-            <img class={"thumbnail"} src={dir.thumbnail} />
+            <img class={"thumbnail"} src={this.dataService.dirPathMapImageInfos.get(dir.path)?.[0].atomPath} />
             <span class={"name"}>{dir.name}</span>
           </div>
         ))}

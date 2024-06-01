@@ -15,7 +15,6 @@ import {
   Watcher
 } from "@packages/vue-class"
 import TitleBar from "@renderer/components/title-bar"
-import { invoke } from "@renderer/exposed.ts"
 import { KEY_PREFIX, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
 import DirectoryManager from "@renderer/photo/directory-manager"
 import ImgList from "@renderer/photo/img-list"
@@ -44,18 +43,18 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   @Link() asideEl: HTMLElement
   @Mut() asideWidth = -1
 
-  @Watcher() toReadImageInfos() {
-    this.dataService.imageInfos = []
+  @Watcher({
+    source: (instance: PhotoInst) => [instance.dataService.allDirectories, instance.dataService.selectedAsideKeys]
+  })
+  toReadImageInfos() {
     const key = this.dataService.selectedAsideKeys[0]
     if (key === "all-images") {
-      invoke("photo:readImages", this.dataService.allDirectories)
-      this.dataService.curDirectory = undefined
+      this.dataService.setCurDirectory(undefined)
     } else if ((key + "").indexOf(KEY_PREFIX) === 0) {
       const dir = this.dataService.findDirectory(key + "")
-      if (dir) invoke("photo:readImages", [dir])
-      this.dataService.curDirectory = dir
+      this.dataService.setCurDirectory(dir)
     } else {
-      this.dataService.curDirectory = undefined
+      this.dataService.setCurDirectory(undefined)
     }
   }
 
@@ -113,7 +112,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
   }
 
   render(): VNodeChild {
-    const imageInfos = this.dataService.imageInfos
+    const imageInfos = this.dataService.curImageInfos
     const curItemType = this.dataService.curItemType
 
     return (

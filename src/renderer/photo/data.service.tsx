@@ -4,9 +4,10 @@ import { listen, remove } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
   BindThis,
+  Computed,
   EventListener,
   Invoke,
-  IpcReceived,
+  IpcListener,
   IpcSync,
   Mut,
   Service,
@@ -83,8 +84,7 @@ export class PhotoDataService extends VueService {
                 status.value = ""
                 this.allDirectories.push({
                   path: path,
-                  name: directoryName,
-                  thumbnail: ""
+                  name: directoryName
                 })
                 this.allDirectories = this.allDirectories.slice()
                 return Promise.resolve()
@@ -118,7 +118,7 @@ export class PhotoDataService extends VueService {
               const newPath = await invoke("fs:rename", curDirectory.path, directoryName)
               if ("filePath" in newPath) {
                 this.allDirectories = this.allDirectories.slice()
-                for (let info of this.imageInfos) {
+                for (let info of this.curImageInfos) {
                   info.filePath = info.filePath.replace(curDirectory.path, newPath.filePath)
                   info.directoryPath = info.directoryPath.replace(curDirectory.path, newPath.filePath)
                   info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.atomPath)
@@ -216,7 +216,13 @@ export class PhotoDataService extends VueService {
     },
     {
       label: "复制",
-      key: "copy"
+      key: "copy",
+      onClick: () => {
+        this.showContextmenu = false
+        if (this.curImageInfo) {
+          invoke("fs:copyFilesIntoClipboard", [this.curImageInfo.atomPath])
+        }
+      }
     },
     {
       label: "复制为路径",
@@ -233,12 +239,18 @@ export class PhotoDataService extends VueService {
         {
           label: "复制到文件夹",
           key: "copy-to-directory",
-          onClick: () => photoEventBus.emit("copyOrMoveFiles", "复制")
+          onClick: () => {
+            this.showContextmenu = false
+            photoEventBus.emit("copyOrMoveFiles", "复制")
+          }
         },
         {
           label: "移动到文件夹",
           key: "move-to-directory",
-          onClick: () => photoEventBus.emit("copyOrMoveFiles", "移动")
+          onClick: () => {
+            this.showContextmenu = false
+            photoEventBus.emit("copyOrMoveFiles", "移动")
+          }
         }
       ]
     },
@@ -291,10 +303,7 @@ export class PhotoDataService extends VueService {
             onOk: () => {
               invoke("fs:rm", this.curImageInfo!.filePath).then((result) => {
                 if (result) notification.error({ message: result })
-                else {
-                  remove(this.imageInfos, this.curImageInfo)
-                  this.selectedImagePaths.delete(this.curImageInfo!.atomPath)
-                }
+                else this._removeImage(this.curImageInfo!)
               })
             },
             centered: true,
@@ -319,6 +328,11 @@ export class PhotoDataService extends VueService {
 
   @Mut(true) curImageInfo?: ImageInfo
 
+  @Mut() dirPathMapImageInfos = new Map<string, ImageInfo[]>()
+
+  // 记录已存储的图片，key为图片的atomPath
+  readonly imageInfoMap = new Map<string, ImageInfo>()
+
   // 当前选中的菜单项
   @Mut() curItemType?: { label: string; icon: VNode }
 
@@ -331,10 +345,7 @@ export class PhotoDataService extends VueService {
   allDirectories: Directory[] = []
 
   // 图片信息列表，用于存储图片的各种信息，例如元数据、文件路径等。
-  // 接受来自photo:transferImageInfo频道的数据
-  @IpcReceived("photo:transferImageInfo", { concat: true })
-  @Mut()
-  imageInfos: ImageInfo[] = []
+  @Mut() curImageInfos: ImageInfo[] = []
 
   // 图片的排序规则
   @Mut() imageSortRule: { order: SortOrder; asc: boolean } = {
@@ -380,8 +391,47 @@ export class PhotoDataService extends VueService {
   // 选中的图片地址集合
   @Mut() selectedImagePaths = new Set<string>()
 
+  @Computed() get allImageInfos() {
+    return ([] as ImageInfo[]).concat(...Array.from(this.dirPathMapImageInfos.values()))
+  }
+
+  @Watcher() toReadAllImageInfos() {
+    const existDirectories = this.allDirectories.length
+    const existImages = this.dirPathMapImageInfos.size
+    if (existDirectories && !existImages) {
+      console.log("toReadAllImageInfos", existImages, existDirectories)
+      invoke("photo:readImages", this.allDirectories)
+    }
+  }
+
+  @IpcListener("photo:transferImageInfo") receiveImageInfos(infos: ImageInfo[]) {
+    for (let info of infos) {
+      let array = this.dirPathMapImageInfos.get(info.directoryPath)
+      if (!array) this.dirPathMapImageInfos.set(info.directoryPath, (array = []))
+      if (!this.imageInfoMap.has(info.atomPath)) {
+        array.push(info)
+        this.imageInfoMap.set(info.atomPath, info)
+      }
+    }
+    this.setCurDirectory(this.curDirectory)
+  }
+
+  @IpcListener("photo:transferImageInfoEnd") receiveImageInfosEnd() {
+    this.setCurDirectory(this.curDirectory)
+    console.log(this.curImageInfos)
+  }
+
+  setCurDirectory(dir?: Directory) {
+    this.curDirectory = dir
+    if (!dir) this.curImageInfos = this.allImageInfos
+    else {
+      const array = this.dirPathMapImageInfos.get(dir.path)
+      if (array) this.curImageInfos = array
+    }
+  }
+
   async startSlide(directoryPath: string) {
-    const imageInfos = this.imageInfos.filter((i) => i.directoryPath === directoryPath)
+    const imageInfos = this.curImageInfos.filter((i) => i.directoryPath === directoryPath)
     if (imageInfos.length === 0) {
       notification.warn({
         message: "无可播放图片"
@@ -425,7 +475,7 @@ export class PhotoDataService extends VueService {
     // 获取当前的排序规则
     const order = this.imageSortRule.order
     const asc = this.imageSortRule.asc
-    listen(this.imageInfos.length)
+    listen(this.curImageInfos.length)
     this._sortImageInfosImpl(order, asc)
   }
 
@@ -443,7 +493,7 @@ export class PhotoDataService extends VueService {
    */
   @EventListener(photoEventBus, "selectAll") handleSelectAllImage() {
     // 遍历图片信息列表，将每张图片的路径添加到已选择图片路径的集合中
-    for (let info of this.imageInfos) {
+    for (let info of this.curImageInfos) {
       this.selectedImagePaths.add(info.atomPath)
     }
   }
@@ -525,6 +575,23 @@ export class PhotoDataService extends VueService {
   async copyOrMoveImages(copyOrMove: "复制" | "移动", targetDirectoryPath: string) {
     // 获取当前选中的图片路径集合
     const imagePaths = Array.from(this.selectedImagePaths)
+
+    /**
+     * 根据提供的图片路径数组，获取对应的图片信息数组，并清理掉已读取的图片信息。
+     * 之后，会调用 `invoke` 方法，传入一个包含所有图片所在目录的数组，重新读取图片。
+     */
+    const imageInfos = imagePaths.map((path) => this.imageInfoMap.get(path)!) // 根据路径获取图片信息数组
+    const directories = new Set<Directory>() // 创建一个用于存储目录的集合
+    directories.add(this.findDirectory(targetDirectoryPath)!)
+    // 遍历图片信息，查找对应的目录，并从相关集合中移除已处理的图片信息
+    for (let imageInfo of imageInfos) {
+      const directory = this.allDirectories.find((val) => val.path === imageInfo.directoryPath)
+      if (directory) {
+        directories.add(directory) // 将找到的目录添加到集合中
+        if (copyOrMove === "移动") this._removeImage(imageInfo)
+      }
+    }
+
     let result: PromiseSettledResult<string>[]
 
     // 根据操作类型执行复制或移动
@@ -541,8 +608,7 @@ export class PhotoDataService extends VueService {
         overwriteAsSameName: false
       })
 
-    let allSuccess = true,
-      index = 0
+    let allSuccess = true
 
     // 清空已选择的图片路径集合
     this.selectedImagePaths.clear()
@@ -556,37 +622,17 @@ export class PhotoDataService extends VueService {
           message: res.reason.message,
           duration: null
         })
-      } else {
-        // 若操作成功，则更新图片路径，并在imageInfos中查找对应图片信息进行路径更新
-        const oldImagePath = imagePaths[index]
-        const newImagePath = res.value
-        const imageInfo = this.imageInfos.find((info) => info.atomPath === oldImagePath)
-        if (imageInfo) imageInfo.atomPath = newImagePath
-        imagePaths[index] = newImagePath
       }
-
-      // 将处理过的图片路径添加回已选择的图片路径集合
-      this.selectedImagePaths.add(imagePaths[index])
-      index++
     }
 
-    /**
-     * 设置目标目录的缩略图。
-     * 此代码段首先寻找指定路径的目标目录，如果找到，就通过异步调用获取该目录的缩略图，并将其保存到目标目录对象中。
-     */
-    const targetDir = this.findDirectory(targetDirectoryPath) // 寻找指定路径的目标目录
-    if (targetDir) {
-      // 如果目标目录存在，异步获取目录的缩略图
-      const thumbnails = await invoke("photo:getDirectoryThumbnail", [targetDir])
-      // 设置目标目录的缩略图为获取到的第一张缩略图
-      targetDir.thumbnail = thumbnails[0]
-    }
+    invoke("photo:readImages", Array.from(directories)) // 调用invoke方法，传入目录数组进行进一步处理
 
     return allSuccess
   }
 
   setup() {
     this.curItemType = this.asideMenu[0] as any
+    console.log(this)
   }
 
   /**
@@ -598,7 +644,7 @@ export class PhotoDataService extends VueService {
    */
   @Throttle()
   private _sortImageInfosImpl(order: SortOrder, asc: boolean) {
-    this.imageInfos.sort((a, b) => {
+    this.curImageInfos.sort((a, b) => {
       let result: number
       // 根据排序字段进行比较，如果是按名称排序，则使用localeCompare方法比较字符串，
       // 否则直接比较对应属性的值。
@@ -610,6 +656,15 @@ export class PhotoDataService extends VueService {
     })
     // 发出更新行事件，通知相关组件数据已变更。
     photoEventBus.emit("updateRows")
+  }
+
+  private _removeImage(info: ImageInfo) {
+    const array = this.dirPathMapImageInfos.get(info.directoryPath)
+    if (array) {
+      remove(array, info)
+    }
+    this.imageInfoMap.delete(info.atomPath)
+    this.selectedImagePaths.delete(info.atomPath)
   }
 }
 
