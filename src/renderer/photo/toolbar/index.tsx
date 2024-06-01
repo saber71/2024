@@ -72,6 +72,10 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
             已选择{this.dataService.selectedImagePaths.size}
           </Button>
         ) : null}
+        <Button type={"text"} onClick={() => this.dataService.startSlide()}>
+          <RightCircleOutlined />
+          开始幻灯片放映
+        </Button>
         {this.dataService.selectedImagePaths.size ? (
           <Dropdown
             trigger={"click"}

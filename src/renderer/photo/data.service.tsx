@@ -1,6 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { Directory } from "@main/photo.ipc.ts"
-import { listen, remove } from "@packages/common"
+import { deepClone, listen, remove } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
   BindThis,
@@ -121,10 +121,17 @@ export class PhotoDataService extends VueService {
                 for (let info of this.curImageInfos) {
                   info.filePath = info.filePath.replace(curDirectory.path, newPath.filePath)
                   info.directoryPath = info.directoryPath.replace(curDirectory.path, newPath.filePath)
+                  this.imageInfoMap.delete(info.atomPath)
                   info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.atomPath)
+                  this.imageInfoMap.set(info.atomPath, info)
                 }
+                const array = this.dirPathMapImageInfos.get(curDirectory.path)!
+                this.dirPathMapImageInfos.delete(curDirectory.path)
+                const asideMenu = this.findMenuItem(curDirectory.path)
                 curDirectory.name = directoryName
                 curDirectory.path = newPath.filePath
+                this.dirPathMapImageInfos.set(curDirectory.path, array)
+                if (asideMenu) Object.assign(asideMenu, toItemType(curDirectory))
                 return
               } else {
                 notification.error({ message: newPath.message })
@@ -173,9 +180,7 @@ export class PhotoDataService extends VueService {
       key: "play-slide",
       onClick: () => {
         this.showContextmenu = false
-        if (this.curDirectory) {
-          this.startSlide(this.curDirectory.path)
-        }
+        this.startSlide()
       }
     }
   ]
@@ -199,9 +204,7 @@ export class PhotoDataService extends VueService {
       key: "play-slide",
       onClick: () => {
         this.showContextmenu = false
-        if (this.curDirectory) {
-          this.startSlide(this.curDirectory.path)
-        }
+        this.startSlide()
       }
     },
     {
@@ -391,10 +394,17 @@ export class PhotoDataService extends VueService {
   // 选中的图片地址集合
   @Mut() selectedImagePaths = new Set<string>()
 
+  /**
+   * 计算属性：获取所有图片信息的集合。
+   * @returns 返回一个ImageInfo类型的数组，包含所有目录下的图片信息。
+   */
   @Computed() get allImageInfos() {
     return ([] as ImageInfo[]).concat(...Array.from(this.dirPathMapImageInfos.values()))
   }
 
+  /**
+   * 监听器：当所有目录被设置且尚未读取图片信息时，触发读取图片信息的操作。
+   */
   @Watcher() toReadAllImageInfos() {
     const existDirectories = this.allDirectories.length
     const existImages = this.dirPathMapImageInfos.size
@@ -404,6 +414,11 @@ export class PhotoDataService extends VueService {
     }
   }
 
+  /**
+   * IPC监听器：接收图片信息。
+   * @param infos 图片信息数组。
+   * 将接收到的图片信息分类存储，并更新当前目录的图片信息。
+   */
   @IpcListener("photo:transferImageInfo") receiveImageInfos(infos: ImageInfo[]) {
     for (let info of infos) {
       let array = this.dirPathMapImageInfos.get(info.directoryPath)
@@ -416,11 +431,20 @@ export class PhotoDataService extends VueService {
     this.setCurDirectory(this.curDirectory)
   }
 
+  /**
+   * IPC监听器：接收图片信息结束的信号。
+   * 标记当前目录图片信息读取完成，并打印当前目录的图片信息。
+   */
   @IpcListener("photo:transferImageInfoEnd") receiveImageInfosEnd() {
     this.setCurDirectory(this.curDirectory)
     console.log(this.curImageInfos)
   }
 
+  /**
+   * 设置当前目录，并更新当前目录下的图片信息。
+   * @param dir 可选参数，指定要设置的目录。
+   * 更新curImageInfos为当前目录下的图片信息，如果没有指定目录，则使用所有图片信息。
+   */
   setCurDirectory(dir?: Directory) {
     this.curDirectory = dir
     if (!dir) this.curImageInfos = this.allImageInfos
@@ -430,14 +454,18 @@ export class PhotoDataService extends VueService {
     }
   }
 
-  async startSlide(directoryPath: string) {
-    const imageInfos = this.curImageInfos.filter((i) => i.directoryPath === directoryPath)
+  /**
+   * 启动幻灯片播放。
+   * 首先检查当前图片信息列表是否为空，若为空则警告，否则初始化并打开幻灯片查看器。
+   */
+  async startSlide() {
+    const imageInfos = this.curImageInfos
     if (imageInfos.length === 0) {
       notification.warn({
         message: "无可播放图片"
       })
     } else {
-      await invoke("photo-viewer:setSlideImageInfos", imageInfos)
+      await invoke("photo-viewer:setSlideImageInfos", deepClone(imageInfos))
       invoke("photo-viewer:open")
     }
   }

@@ -164,6 +164,7 @@ export class PhotoInst extends VueComponent<PhotoProps> {
             <div class={"h-full flex-grow box-border select-none relative"}>
               {/*主体部分*/}
               <div
+                id={"head"}
                 class={"overflow-hidden absolute left-6 top-6"}
                 style={{ width: "calc(100% - 48px)", height: "calc(100% - 24px)" }}
               >
