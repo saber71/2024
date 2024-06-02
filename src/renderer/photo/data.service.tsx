@@ -223,7 +223,7 @@ export class PhotoDataService extends VueService {
       onClick: () => {
         this.showContextmenu = false
         if (this.curImageInfo) {
-          invoke("fs:copyFilesIntoClipboard", [this.curImageInfo.atomPath])
+          invoke("fs:copyFilesIntoClipboard", [this.curImageInfo.filePath])
         }
       }
     },
@@ -274,10 +274,11 @@ export class PhotoDataService extends VueService {
               if (!newName) return Promise.reject("image name is empty!")
               if (newName === this.curImageInfo!.nameWithoutExt) return
               const imageInfo = this.curImageInfo!
-              const newPath = await invoke("fs:rename", imageInfo.filePath, imageInfo.name)
+              const newPath = await invoke("fs:rename", imageInfo.filePath, newName + "." + imageInfo.extName)
               if ("filePath" in newPath) {
                 imageInfo.nameWithoutExt = newName
                 imageInfo.name = newName + "." + imageInfo.extName
+                console.log(newPath)
                 Object.assign(imageInfo, newPath)
                 this.sortImageInfos()
                 return
@@ -294,24 +295,24 @@ export class PhotoDataService extends VueService {
       type: "divider"
     },
     {
+      label: "在文件资源管理器中打开",
+      key: "open-file",
+      onClick: () => {
+        if (this.curImageInfo) {
+          this.showContextmenu = false
+          invoke("fs:showItemInFolder", this.curImageInfo.filePath)
+        }
+      }
+    },
+    {
       label: "删除",
       key: "remove",
       class: "contextmenu-remove",
       onClick: () => {
         this.showContextmenu = false
         if (this.curImageInfo) {
-          Modal.confirm({
-            title: "删除图片",
-            content: `是否删除图片${this.curImageInfo.name}？`,
-            onOk: () => {
-              invoke("fs:rm", this.curImageInfo!.filePath).then((result) => {
-                if (result) notification.error({ message: result })
-                else this._removeImage(this.curImageInfo!)
-              })
-            },
-            centered: true,
-            okText: "删除"
-          })
+          this.checkConfirmRemoveImage([this.curImageInfo])
+          this.curImageInfo = undefined
         }
       }
     }
@@ -400,6 +401,39 @@ export class PhotoDataService extends VueService {
    */
   @Computed() get allImageInfos() {
     return ([] as ImageInfo[]).concat(...Array.from(this.dirPathMapImageInfos.values()))
+  }
+
+  /**
+   * 弹出确认对话框，询问用户是否删除指定的图片。
+   *
+   * 此函数通过Modal.confirm弹出一个确认对话框，提示用户是否确认删除指定的图片。
+   * 如果用户确认删除，将调用后台服务删除图片，并根据删除结果给出相应的提示。
+   */
+  checkConfirmRemoveImage(infos?: ImageInfo[]) {
+    if (!infos) {
+      const array = Array.from(this.selectedImagePaths)
+      infos = array.map((path) => this.imageInfoMap.get(path)).filter((info) => !!info) as ImageInfo[]
+    }
+    if (!infos.length) return
+    Modal.confirm({
+      title: "删除图片",
+      content: `是否删除图片${infos[0].name}${infos.length ? "等" : ""}？`,
+      onOk: () => {
+        infos!.forEach((info) => {
+          // 调用后台服务删除图片文件
+          invoke("fs:rm", info.filePath).then((result) => {
+            // 如果删除失败，显示错误通知
+            if (result) notification.error({ message: result })
+            else {
+              // 如果删除成功，从列表中移除图片
+              this._removeImage(info)
+            }
+          })
+        })
+      },
+      centered: true,
+      okText: "删除"
+    })
   }
 
   /**

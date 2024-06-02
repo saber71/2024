@@ -5,6 +5,7 @@ import {
   DashOutlined,
   DownOutlined,
   FunnelPlotOutlined,
+  RestOutlined,
   RightCircleOutlined,
   SortAscendingOutlined
 } from "@ant-design/icons-vue"
@@ -59,7 +60,8 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
     this.copyOrMove = type
   }
 
-  @BindThis() async handleModalConfirm() {
+  @BindThis()
+  async handleModalConfirm() {
     await this.dataService.copyOrMoveImages(this.copyOrMove, this.selectedDirectoryPaths[0])
     this.openModal = false
   }
@@ -68,14 +70,20 @@ export class ToolbarInst extends VueComponent<ToolbarProps> {
     return (
       <Flex align={"center"} style={{ height: "fit-content" }}>
         {this.dataService.selectedImagePaths.size ? (
-          <Button type={"text"} icon={<CloseOutlined />} onClick={() => photoEventBus.emit("unselectAll")}>
-            已选择{this.dataService.selectedImagePaths.size}
+          [
+            <Button type={"text"} icon={<CloseOutlined />} onClick={() => photoEventBus.emit("unselectAll")}>
+              已选择{this.dataService.selectedImagePaths.size}
+            </Button>,
+            <Button type={"text"} icon={<RestOutlined />} onClick={() => this.dataService.checkConfirmRemoveImage()}>
+              删除
+            </Button>
+          ]
+        ) : (
+          <Button type={"text"} onClick={() => this.dataService.startSlide()}>
+            <RightCircleOutlined />
+            开始幻灯片放映
           </Button>
-        ) : null}
-        <Button type={"text"} onClick={() => this.dataService.startSlide()}>
-          <RightCircleOutlined />
-          开始幻灯片放映
-        </Button>
+        )}
         {this.dataService.selectedImagePaths.size ? (
           <Dropdown
             trigger={"click"}
