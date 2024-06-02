@@ -19,6 +19,10 @@ interface Directories extends FilterItem {
   array: Directory[]
 }
 
+interface Favorites extends FilterItem {
+  array: string[]
+}
+
 export interface PhotoInvokeChannelMap {
   /**
    * 打开照片应用或界面。
@@ -59,6 +63,28 @@ export interface PhotoInvokeChannelMap {
     args: [Directory[]]
     return: void
   }
+  /**
+   * 查询所有收藏的照片。
+   *
+   * 该函数不接受任何参数。
+   * 返回一个字符串数组，包含所有收藏照片的atomPath。
+   */
+  "photo:allFavorites": {
+    args: []
+    return: string[]
+  }
+
+  /**
+   * 更新用户的照片收藏。
+   *
+   * 该函数接受一个字符串数组作为参数。
+   * 参数中的每个字符串代表一个照片的atomPath，用于指定要存储的收藏照片。
+   * 函数执行成功后不返回任何值。
+   */
+  "photo:updateFavorites": {
+    args: [string[]]
+    return: void
+  }
 
   /**
    * 读取指定目录中的图片。
@@ -97,6 +123,7 @@ export interface PhotoTransferDataToRendererChannelMap {
 }
 
 const ALL_DIRECTORIES = "photo:all_directories"
+const ALL_FAVORITE = "photo:all_favorites"
 
 @Ipc()
 export class PhotoIpc {
@@ -121,6 +148,39 @@ export class PhotoIpc {
       // 当窗口关闭时，重置photoWindow的引用，防止其泄露
       window.on("closed", () => (this.dataService.photoWindow = undefined))
     })
+  }
+
+  /**
+   * 更新所有收藏的照片路径。
+   * 通过这个函数，可以保存用户的收藏列表，以便后续访问。
+   *
+   * @param atomPaths 收藏照片的路径列表。
+   */
+  @IpcHandler("photo:updateFavorites") async updateFavorites(atomPaths: string[]) {
+    await this.dataService.collection.save<Favorites>({
+      _id: ALL_FAVORITE,
+      array: atomPaths
+    })
+  }
+
+  /**
+   * 获取所有收藏的照片路径。
+   * 这个函数用于检索用户当前的所有收藏照片路径，如果尚未保存过收藏列表，则创建一个新的空列表。
+   *
+   * @returns 所有收藏照片的路径数组。
+   */
+  @IpcHandler("photo:allFavorites")
+  async allFavorites() {
+    let data = await this.dataService.collection.getById<Favorites>(ALL_FAVORITE)
+    if (!data) {
+      // 如果记录不存在，则创建一个
+      const array = await this.dataService.collection.save<Favorites>({
+        array: [],
+        _id: ALL_FAVORITE
+      })
+      data = array[0]
+    }
+    return data.array
   }
 
   /**

@@ -1,6 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { Directory } from "@main/photo.ipc.ts"
-import { deepClone, listen, remove } from "@packages/common"
+import { deepClone, listen, remove, throttleFnImmediate } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
   BindThis,
@@ -348,6 +348,11 @@ export class PhotoDataService extends VueService {
   @Mut(true)
   allDirectories: Directory[] = []
 
+  @IpcSync("photo:updateFavorites")
+  @Invoke("photo:allFavorites")
+  @Mut(true)
+  allFavorites: string[] = []
+
   // 图片信息列表，用于存储图片的各种信息，例如元数据、文件路径等。
   @Mut() curImageInfos: ImageInfo[] = []
 
@@ -481,10 +486,18 @@ export class PhotoDataService extends VueService {
    */
   setCurDirectory(dir?: Directory) {
     this.curDirectory = dir
-    if (!dir) this.curImageInfos = this.allImageInfos
-    else {
+    this._sortImageInfosImpl(this.imageSortRule.order, this.imageSortRule.asc)
+    if (!dir) {
+      const key = this.selectedAsideKeys[0]
+      if (key === "favorite") this.curImageInfos = this.allFavorites.map((atomPath) => this.imageInfoMap.get(atomPath)!)
+      else this.curImageInfos = this.allImageInfos
+      throttleFnImmediate(this._sortImageInfosImpl)
+    } else {
       const array = this.dirPathMapImageInfos.get(dir.path)
-      if (array) this.curImageInfos = array
+      if (array) {
+        this.curImageInfos = array
+        throttleFnImmediate(this._sortImageInfosImpl)
+      }
     }
   }
 

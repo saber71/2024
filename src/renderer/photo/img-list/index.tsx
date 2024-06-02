@@ -1,5 +1,7 @@
-import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, spread } from "@packages/common"
+import { HeartFilled, HeartOutlined } from "@ant-design/icons-vue"
+import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, remove, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
+import { stopPropagation } from "@packages/dom-common/stopPropagation.ts"
 import type { ImageInfo } from "@packages/electron"
 import {
   BindThis,
@@ -189,6 +191,13 @@ export class ImgListInst extends VueComponent<ImgListProps> {
     this.dataService.selectImage(pic, false)
   }
 
+  @BindThis() handleSelectFavoriteImage(e: MouseEvent, pic: Picture, toSelect: boolean) {
+    e.stopPropagation()
+    if (!toSelect) remove(this.dataService.allFavorites, pic.info.atomPath)
+    else this.dataService.allFavorites.push(pic.info.atomPath)
+    this.dataService.allFavorites = this.dataService.allFavorites.slice()
+  }
+
   render(): VNodeChild {
     return (
       <div
@@ -208,6 +217,7 @@ export class ImgListInst extends VueComponent<ImgListProps> {
             >
               {row.array.map((pic, i) => {
                 const checked = this.dataService.selectedImagePaths.has(pic.info.atomPath)
+                const selectedFavorite = this.dataService.allFavorites.includes(pic.info.atomPath)
                 return (
                   <div
                     class={[
@@ -234,13 +244,22 @@ export class ImgListInst extends VueComponent<ImgListProps> {
                       loading={"lazy"}
                       title={pic.info.name}
                     />
+                    <div class={"mask"}></div>
                     <div
                       class={["checkbox", checked ? "checked" : ""]}
-                      onMousedown={(e) => e.stopPropagation()}
-                      onMouseup={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
+                      onMousedown={stopPropagation}
+                      onMouseup={stopPropagation}
+                      onClick={stopPropagation}
                     >
                       <Checkbox checked={checked} onUpdate:checked={(val) => this.handleClickCheckbox(val, pic)} />
+                    </div>
+                    <div
+                      class={["absolute right-3 bottom-3 favorite", selectedFavorite ? "favorite-selected" : ""]}
+                      onMousedown={(e) => this.handleSelectFavoriteImage(e, pic, !selectedFavorite)}
+                      onMouseup={stopPropagation}
+                      onClick={stopPropagation}
+                    >
+                      {selectedFavorite ? <HeartFilled /> : <HeartOutlined />}
                     </div>
                   </div>
                 )

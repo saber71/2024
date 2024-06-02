@@ -9,14 +9,32 @@ export function throttle<F extends Function>(fn: F, delay: number) {
   let lastArgs: any[] = [] //存储最近一次的入参
 
   // 返回一个封装函数来控制原函数的调用
-  return (...args: any[]) => {
+  const func = function (...args: any[]) {
     lastArgs = args
-    if (handler) return // 如果定时器存在，则不执行原函数，直接返回
+    if (handler) return func // 如果定时器存在，则不执行原函数，直接返回
 
     // 设置定时器，并在延时后清除定时器并执行原函数
     handler = setTimeout(() => {
       handler = null // 清除定时器引用
       fn(...lastArgs) // 执行原函数，使用最新的入参
     }, delay)
+
+    return func
   }
+  func.cancel = () => {
+    clearTimeout(handler)
+    handler = null
+  }
+  func.immediate = () => {
+    if (handler) {
+      clearTimeout(handler)
+      handler = null
+    }
+    fn(...lastArgs)
+  }
+  return func
+}
+
+export function throttleFnImmediate(fn: Function) {
+  ;(fn as any).immediate()
 }
