@@ -114,29 +114,7 @@ export class PhotoDataService extends VueService {
             onOk: async () => {
               if (!directoryName) return Promise.reject("directory name is empty!")
               const curDirectory = this.curDirectory!
-              if (directoryName === curDirectory.name) return
-              const newPath = await invoke("fs:rename", curDirectory.path, directoryName)
-              if ("filePath" in newPath) {
-                this.allDirectories = this.allDirectories.slice()
-                for (let info of this.curImageInfos) {
-                  info.filePath = info.filePath.replace(curDirectory.path, newPath.filePath)
-                  info.directoryPath = info.directoryPath.replace(curDirectory.path, newPath.filePath)
-                  this.imageInfoMap.delete(info.atomPath)
-                  info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.atomPath)
-                  this.imageInfoMap.set(info.atomPath, info)
-                }
-                const array = this.dirPathMapImageInfos.get(curDirectory.path)!
-                this.dirPathMapImageInfos.delete(curDirectory.path)
-                const asideMenu = this.findMenuItem(curDirectory.path)
-                curDirectory.name = directoryName
-                curDirectory.path = newPath.filePath
-                this.dirPathMapImageInfos.set(curDirectory.path, array)
-                if (asideMenu) Object.assign(asideMenu, toItemType(curDirectory))
-                return
-              } else {
-                notification.error({ message: newPath.message })
-                return Promise.reject(newPath)
-              }
+              return this.renameDirectory(curDirectory, directoryName)
             }
           })
         }
@@ -168,6 +146,13 @@ export class PhotoDataService extends VueService {
             onOk: () => {
               remove(this.allDirectories, this.curDirectory)
               this.allDirectories = this.allDirectories.slice()
+              const imageInfos = this.dirPathMapImageInfos.get(this.curDirectory!.path)
+              if (imageInfos) {
+                for (let imageInfo of imageInfos.slice()) {
+                  this._removeImage(imageInfo)
+                }
+                this.dirPathMapImageInfos.delete(this.curDirectory!.path)
+              }
             },
             centered: true,
             okText: "删除"
@@ -272,20 +257,8 @@ export class PhotoDataService extends VueService {
             ),
             onOk: async () => {
               if (!newName) return Promise.reject("image name is empty!")
-              if (newName === this.curImageInfo!.nameWithoutExt) return
               const imageInfo = this.curImageInfo!
-              const newPath = await invoke("fs:rename", imageInfo.filePath, newName + "." + imageInfo.extName)
-              if ("filePath" in newPath) {
-                imageInfo.nameWithoutExt = newName
-                imageInfo.name = newName + "." + imageInfo.extName
-                console.log(newPath)
-                Object.assign(imageInfo, newPath)
-                this.sortImageInfos()
-                return
-              } else {
-                notification.error({ message: newPath.message })
-                return Promise.reject(newPath)
-              }
+              return this.renameImage(imageInfo, newName)
             }
           })
         }
@@ -406,6 +379,70 @@ export class PhotoDataService extends VueService {
    */
   @Computed() get allImageInfos() {
     return ([] as ImageInfo[]).concat(...Array.from(this.dirPathMapImageInfos.values()))
+  }
+
+  /**
+   * 异步重命名图片文件。
+   *
+   * @param imageInfo 图片信息对象，包含文件路径、文件名等信息。
+   * @param newImageName 新的图片文件名（不包括扩展名）。
+   * @returns 如果重命名成功，则排序并更新图片信息数组；如果失败，则显示错误通知并拒绝承诺。
+   */
+  async renameImage(imageInfo: ImageInfo, newImageName: string) {
+    if (newImageName === imageInfo.nameWithoutExt) return
+    const newPath = await invoke("fs:rename", imageInfo.filePath, newImageName + "." + imageInfo.extName)
+    if ("filePath" in newPath) {
+      imageInfo.nameWithoutExt = newImageName
+      imageInfo.name = newImageName + "." + imageInfo.extName
+      const index = this.allFavorites.indexOf(imageInfo.atomPath)
+      Object.assign(imageInfo, newPath)
+      if (index >= 0) {
+        this.allFavorites[index] = imageInfo.atomPath
+        this.allFavorites = this.allFavorites.slice()
+      }
+      this.sortImageInfos()
+      return
+    } else {
+      notification.error({ message: newPath.message })
+      return Promise.reject(newPath)
+    }
+  }
+
+  /**
+   * 异步重命名目录。
+   *
+   * @param targetDirectory 目标目录对象，包含目录名和路径等信息。
+   * @param newDirectoryName 新的目录名。
+   * @returns 如果重命名成功，则更新相关图片信息和目录信息；如果失败，则显示错误通知并拒绝承诺。
+   */
+  async renameDirectory(targetDirectory: Directory, newDirectoryName: string) {
+    if (newDirectoryName === targetDirectory.name) return
+    const newPath = await invoke("fs:rename", targetDirectory.path, newDirectoryName)
+    if ("filePath" in newPath) {
+      this.allDirectories = this.allDirectories.slice()
+      for (let info of this.curImageInfos) {
+        info.filePath = info.filePath.replace(targetDirectory.path, newPath.filePath)
+        info.directoryPath = info.directoryPath.replace(targetDirectory.path, newPath.filePath)
+        this.imageInfoMap.delete(info.atomPath)
+        info.atomPath = info.atomPath.replace(newPath.oldAtomPath, newPath.atomPath)
+        this.imageInfoMap.set(info.atomPath, info)
+      }
+      for (let i = 0; i < this.allFavorites.length; i++) {
+        this.allFavorites[i] = this.allFavorites[i].replace(newPath.oldAtomPath, newPath.atomPath)
+      }
+      this.allFavorites = this.allFavorites.slice()
+      const array = this.dirPathMapImageInfos.get(targetDirectory.path)!
+      this.dirPathMapImageInfos.delete(targetDirectory.path)
+      const asideMenu = this.findMenuItem(targetDirectory.path)
+      targetDirectory.name = newDirectoryName
+      targetDirectory.path = newPath.filePath
+      this.dirPathMapImageInfos.set(targetDirectory.path, array)
+      if (asideMenu) Object.assign(asideMenu, toItemType(targetDirectory))
+      return
+    } else {
+      notification.error({ message: newPath.message })
+      return Promise.reject(newPath)
+    }
   }
 
   /**
@@ -740,6 +777,11 @@ export class PhotoDataService extends VueService {
     }
     this.imageInfoMap.delete(info.atomPath)
     this.selectedImagePaths.delete(info.atomPath)
+    const index = this.allFavorites.indexOf(info.atomPath)
+    if (index >= 0) {
+      this.allFavorites.splice(index, 1)
+      this.allFavorites = this.allFavorites.slice()
+    }
   }
 }
 
