@@ -5,9 +5,12 @@ import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "@pack
 import type { FilterItem } from "@packages/filter"
 import { Ipc, IpcHandler } from "@packages/vue-class"
 import { app, BrowserWindow, dialog } from "electron"
+import electronPosPrinter from "electron-pos-printer"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
 import { join } from "path"
+
+const { PosPrinter } = electronPosPrinter
 
 // 定义了一个目录的基本属性
 export interface Directory {
@@ -106,6 +109,11 @@ export interface PhotoInvokeChannelMap {
     args: [Directory[]] // 参数为一个目录数组
     return: string[] // 返回值为图片地址数组
   }
+
+  "photo:print": {
+    args: [string]
+    return: void
+  }
 }
 
 export interface PhotoTransferDataToRendererChannelMap {
@@ -156,7 +164,8 @@ export class PhotoIpc {
    *
    * @param atomPaths 收藏照片的路径列表。
    */
-  @IpcHandler("photo:updateFavorites") async updateFavorites(atomPaths: string[]) {
+  @IpcHandler("photo:updateFavorites")
+  async updateFavorites(atomPaths: string[]) {
     await this.dataService.collection.save<Favorites>({
       _id: ALL_FAVORITE,
       array: atomPaths
@@ -266,6 +275,19 @@ export class PhotoIpc {
         // 获取第一个图片的详细信息，然后返回其路径
         return getImageInfo(firstPath).then((info) => info?.atomPath ?? "")
       })
+    )
+  }
+
+  @IpcHandler("photo:print") print(imageFilePath: string) {
+    PosPrinter.print(
+      [
+        {
+          type: "image",
+          path: imageFilePath,
+          position: "center"
+        }
+      ],
+      { boolean: undefined }
     )
   }
 }

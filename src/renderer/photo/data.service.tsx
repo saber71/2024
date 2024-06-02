@@ -20,7 +20,6 @@ import { Input, type ItemType, Modal, notification } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import EventEmitter from "eventemitter3"
 import type { OverlayScrollbars } from "overlayscrollbars"
-import Printd from "printd"
 import { h, ref, type VNode } from "vue"
 
 type SortOrder = "birthtimeMs" | "mtimeMs" | "name"
@@ -198,7 +197,7 @@ export class PhotoDataService extends VueService {
       onClick: () => {
         this.showContextmenu = false
         if (this.curImageInfo) {
-          new Printd().print(document.getElementById("image-" + this.curImageInfo.ino)!)
+          invoke("photo:print", this.curImageInfo.filePath)
         }
       }
     },
