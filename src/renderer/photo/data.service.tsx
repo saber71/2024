@@ -522,7 +522,6 @@ export class PhotoDataService extends VueService {
    */
   setCurDirectory(dir?: Directory) {
     this.curDirectory = dir
-    this._sortImageInfosImpl(this.imageSortRule.order, this.imageSortRule.asc)
     if (!dir) {
       const key = this.selectedAsideKeys[0]
       if (key === "favorite") this.curImageInfos = this.allFavorites.map((atomPath) => this.imageInfoMap.get(atomPath)!)
@@ -583,11 +582,8 @@ export class PhotoDataService extends VueService {
    * 无显式返回值，但会修改类成员变量`imageInfos`的顺序。
    */
   @Watcher() sortImageInfos() {
-    // 获取当前的排序规则
-    const order = this.imageSortRule.order
-    const asc = this.imageSortRule.asc
-    listen(this.curImageInfos.length)
-    this._sortImageInfosImpl(order, asc)
+    listen(this.curImageInfos.length, this.imageSortRule.order, this.imageSortRule.asc)
+    this._sortImageInfosImpl()
   }
 
   /**
@@ -749,12 +745,10 @@ export class PhotoDataService extends VueService {
   /**
    * 根据指定排序条件对图片信息进行排序。
    * 使用防抖装饰器限制函数的调用频率，以提高性能。
-   *
-   * @param order 排序字段，可为"name"或其他图片信息的属性名。
-   * @param asc 是否为升序排序。true为升序，false为降序。
    */
   @Throttle()
-  private _sortImageInfosImpl(order: SortOrder, asc: boolean) {
+  private _sortImageInfosImpl() {
+    const { order, asc } = this.imageSortRule
     this.curImageInfos.sort((a, b) => {
       let result: number
       // 根据排序字段进行比较，如果是按名称排序，则使用localeCompare方法比较字符串，
