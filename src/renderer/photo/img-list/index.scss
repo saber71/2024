@@ -1,9 +1,8 @@
 .img-list {
   .picture {
-    border-color: transparent;
     border-radius: 4px;
     overflow: hidden;
-    transition: all 0.2s;
+    transition: transform 0.2s;
 
     .checkbox {
       display: none;

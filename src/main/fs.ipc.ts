@@ -1,7 +1,6 @@
 import { extractFilePathFromAtomUrl, toAtomUrl } from "@packages/electron"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { Ipc, IpcHandler } from "@packages/vue-class"
-import clipboardFiles from "clipboard-files"
 import { clipboard, dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
 import fsExtra from "fs-extra"
 import { promises } from "node:fs"
@@ -229,7 +228,7 @@ export class FsIpc {
   }
 
   @IpcHandler("fs:copyFilesIntoClipboard") copyFilesIntoClipboard(filePaths: string[]) {
-    clipboardFiles.writeFiles(filePaths)
+    import("clipboard-files").then((clipboardFiles) => clipboardFiles.writeFiles(filePaths))
   }
 }
 

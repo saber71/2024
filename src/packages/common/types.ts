@@ -12,6 +12,18 @@ export type Class<T = any, P extends Array<any> = Array<any>> = {
  */
 export type ExtractPromiseGenericType<T> = T extends Promise<infer U> ? U : T
 
+/**
+ * 提取数组泛型的元素类型。
+ *
+ * 该类型别名用于判断一个泛型T是否为数组类型，并从中提取出数组元素的类型。
+ * 如果泛型T不是数组类型，则直接返回T。
+ * 这种类型操作在处理泛型数组或需要获取数组元素类型的情境中非常有用。
+ *
+ * @param T - 被检查的泛型类型，它可以是任何类型，包括数组类型。
+ * @returns 如果T是数组类型，则返回数组的元素类型；否则返回T本身。
+ */
+export type ExtractArrayGenericType<T> = T extends Array<infer U> ? U : T
+
 export type DeepCloneOption = Partial<{
   cloneMapKey: boolean
 }>

@@ -6,7 +6,7 @@ import type {
   PhotoViewerTransferDataToRendererChannelMap
 } from "@main/photo-viewer.ipc.ts"
 import { createWindow, RunningAnimal } from "@packages/electron"
-import { VueClass } from "@packages/vue-class"
+import { SyncData, VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
 import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
@@ -27,6 +27,38 @@ ffmpeg.setFfmpegPath(FfmpegPath)
 
 // 设置FFprobe可执行文件的路径
 ffmpeg.setFfprobePath(FfprobePath)
+
+/**
+ * 监听特定通道的消息，并同步发送到所有相关窗口。
+ *
+ * 此函数通过ipcMain监听指定通道的消息。当收到消息时，不仅会执行回调函数，
+ * 还会将消息重新发送到所有窗口，但排除消息来源窗口。
+ *
+ * @param channel 消息通道名称，用于监听和发送消息。
+ * @param cb 收到消息时执行的回调函数，参数为接收到的消息。
+ */
+SyncData.on = (channel, cb) => {
+  ipcMain.on(channel, (_, args) => {
+    cb(args)
+    SyncData.emit(channel, args)
+  })
+}
+
+/**
+ * 向除指定窗口外的所有窗口发送消息。
+ *
+ * 此函数用于将消息发送到所有当前打开的浏览器窗口，但不会发送到消息来源的窗口。
+ * 这是实现窗口间数据同步的一种方式。
+ *
+ * @param channel 消息通道名称，用于发送消息。
+ * @param args 要发送的消息内容，包含消息来源窗口的ID等信息。
+ */
+SyncData.emit = (channel, args) => {
+  BrowserWindow.getAllWindows().forEach((window) => {
+    if (window.id === args.fromId) return
+    window.webContents.send(channel, args)
+  })
+}
 
 VueClassMetadata.ipcHandler = (channel, callback) => {
   ipcMain.handle(channel, (event, ...args) => callback(...args, event))

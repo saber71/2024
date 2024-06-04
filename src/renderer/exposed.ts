@@ -4,6 +4,7 @@
  * 以及提供用于动态获取窗口信息和与 IPC 通信的函数。
  */
 import type { Exposed, TransferDataToMainChannelMap, TransferDataToRendererChannelMap } from "@packages/exposed"
+import { SyncData } from "@packages/vue-class"
 import { ref, type Ref, unref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
@@ -15,6 +16,13 @@ const exposed: Exposed = window as any
  * 也不直接返回任何值，但保存了electronApi的引用以供后续使用
  */
 const electronApi = exposed.electronApi
+
+SyncData.on = (channel, callback) => {
+  electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
+}
+SyncData.emit = (channel, args) => {
+  electronApi.ipcRenderer.send(channel, args)
+}
 
 /**
  * 获取并保存exposed对象中的api属性。
