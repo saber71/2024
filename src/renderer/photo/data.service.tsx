@@ -484,7 +484,6 @@ export class PhotoDataService extends VueService {
     const existDirectories = this.allDirectories.length
     const existImages = this.dirPathMapImageInfos.size
     if (existDirectories && !existImages) {
-      console.log("toReadAllImageInfos", existImages, existDirectories)
       invoke("photo:readImages", this.allDirectories)
     }
   }
@@ -512,7 +511,6 @@ export class PhotoDataService extends VueService {
    */
   @IpcListener("photo:transferImageInfoEnd") receiveImageInfosEnd() {
     this.setCurDirectory(this.curDirectory)
-    console.log(this.curImageInfos)
   }
 
   /**
@@ -739,7 +737,6 @@ export class PhotoDataService extends VueService {
 
   setup() {
     this.curItemType = this.asideMenu[0] as any
-    console.log(this)
   }
 
   /**

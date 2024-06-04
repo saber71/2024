@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons-vue"
 import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, remove, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
-import { stopPropagation } from "@packages/dom-common/stopPropagation.ts"
+import { stopPropagation } from "@packages/dom-common"
 import type { ImageInfo } from "@packages/electron"
 import {
   BindThis,

@@ -476,6 +476,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
     instance.setup()
   }
   metadata.handleSetup(instance)
+  if (metadata.isService) (window as any)[instance.constructor.name] = instance
   return metadata
 }
 

@@ -1,6 +1,6 @@
 import { Collection } from "@packages/collection"
 import type { ImageInfo } from "@packages/electron"
-import { IpcHandler, Service } from "@packages/vue-class"
+import { IpcHandler, Service, SyncData } from "@packages/vue-class"
 import type { BrowserWindow } from "electron"
 
 @Service()
@@ -23,4 +23,6 @@ export class DataService {
   @IpcHandler("photo-viewer:getCurImageInfo") photoViewerCurImageInfo?: ImageInfo
 
   @IpcHandler("photo-viewer:getSlideImageInfos") photoViewerSlideImageInfos: ImageInfo[] = []
+
+  readonly name = SyncData.create("name", "123")
 }
