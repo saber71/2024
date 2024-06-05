@@ -29,8 +29,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/renderer/index/index.html"),
-          photo: resolve(__dirname, "src/renderer/photo/photo.html"),
-          "photo-viewer": resolve(__dirname, "src/renderer/photo/photo-viewer.html")
+          photo: resolve(__dirname, "src/renderer/photo/photo.html")
         }
       }
     },

@@ -1,10 +1,6 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
-import type {
-  PhotoViewerInvokeChannelMap,
-  PhotoViewerTransferDataToRendererChannelMap
-} from "@main/photo-viewer.ipc.ts"
 import { createWindow, RunningAnimal } from "@packages/electron"
 import { SyncData, VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
@@ -14,7 +10,6 @@ import * as process from "node:process"
 import * as url from "node:url"
 import "./fs.ipc.ts"
 import "./photo.ipc.ts"
-import "./photo-viewer.ipc.ts"
 import type { FsInvokeChannelMap } from "./fs.ipc.ts"
 import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ipc.ts"
 import type { WindowInvokeChannelMap } from "./window.ipc.ts"
@@ -164,11 +159,7 @@ function createIndexWindow() {
 /**
  * 定义了一组channel映射，用于规范不同操作的参数和返回值。
  */
-export interface IpcInvokeChannelMap
-  extends PhotoInvokeChannelMap,
-    FsInvokeChannelMap,
-    WindowInvokeChannelMap,
-    PhotoViewerInvokeChannelMap {
+export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChannelMap, WindowInvokeChannelMap {
   ping: {
     args: ["123", 1]
     return: void
@@ -176,9 +167,7 @@ export interface IpcInvokeChannelMap
 }
 
 // 定义一组用于向渲染进程传输数据的channel映射
-export interface TransferDataChannelMap
-  extends PhotoTransferDataToRendererChannelMap,
-    PhotoViewerTransferDataToRendererChannelMap {
+export interface TransferDataChannelMap extends PhotoTransferDataToRendererChannelMap {
   "window:isMaximized": boolean
   "window:isShow": boolean
   "window:isFocus": boolean

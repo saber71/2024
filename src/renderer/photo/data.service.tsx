@@ -1,6 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { Directory } from "@main/photo.ipc.ts"
-import { deepClone, listen, remove, throttleFnImmediate } from "@packages/common"
+import { listen, remove, throttleFnImmediate } from "@packages/common"
 import { type ImageInfo } from "@packages/electron"
 import {
   BindThis,
@@ -545,8 +545,6 @@ export class PhotoDataService extends VueService {
         message: "无可播放图片"
       })
     } else {
-      await invoke("photo-viewer:setSlideImageInfos", deepClone(imageInfos))
-      invoke("photo-viewer:open")
     }
   }
 
@@ -555,10 +553,7 @@ export class PhotoDataService extends VueService {
    * @param info 图片信息对象，包含图片的各种详细信息
    * 该函数首先会设置当前图片信息，然后打开图片查看器
    */
-  async openImage(info: ImageInfo) {
-    await invoke("photo-viewer:setCurImageInfo", info) // 设置当前图片信息
-    invoke("photo-viewer:open") // 打开图片查看器
-  }
+  async openImage(info: ImageInfo) {}
 
   /**
    * 选择图像
