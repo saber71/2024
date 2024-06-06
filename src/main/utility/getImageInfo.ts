@@ -1,11 +1,11 @@
 import { isVideoExtName } from "@packages/common"
-import { toAtomUrl } from "@packages/electron/toAtomUrl.ts"
 import ffmpeg from "fluent-ffmpeg"
 import imageSize from "image-size"
 import { promises, type Stats } from "node:fs"
 import { basename, dirname, extname, resolve } from "node:path"
 import { promisify } from "node:util"
-import { createThumbnail } from "./createThumbnail"
+import { createThumbnail } from "./createThumbnail.ts"
+import { toAtomUrl } from "./toAtomUrl.ts"
 
 // 将image-size库的同步方法转换为异步Promise形式
 const sizeOf = promisify(imageSize)
@@ -67,6 +67,15 @@ export async function getImageInfo(path: string) {
   return result
 }
 
+/**
+ * 获取视频的尺寸信息。
+ *
+ * 通过调用ffmpeg库，此函数承诺返回一个包含视频宽度和高度的对象。
+ * 如果无法获取信息，Promise将被拒绝，并传递错误。
+ *
+ * @param path 视频文件的路径。
+ * @returns 返回一个Promise，解析为包含视频宽度和高度的对象，或者在失败时拒绝。
+ */
 function videoSize(path: string) {
   return new Promise<{ width?: number; height?: number }>((resolve1, reject) => {
     ffmpeg.ffprobe(path, (err, data) => {

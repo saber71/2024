@@ -1,6 +1,6 @@
 import { is } from "@electron-toolkit/utils"
+import { sendDataToWeb } from "@main/utility/sendDataToWeb.ts"
 import { deepAssign } from "@packages/common"
-import { sendDataToWeb } from "@packages/electron/sendDataToWeb.ts"
 import { BrowserWindow, type BrowserWindowConstructorOptions, shell } from "electron"
 import { join } from "path"
 import icon from "../../../resources/icon.png"

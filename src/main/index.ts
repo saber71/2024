@@ -1,20 +1,14 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
-import { createWindow, RunningAnimal } from "@packages/electron"
 import { SyncData, VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
 import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
-import "./fs.ipc.ts"
-import "./photo.ipc.ts"
-import type { FsInvokeChannelMap } from "./fs.ipc.ts"
-import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ipc.ts"
-import type { WindowInvokeChannelMap } from "./window.ipc.ts"
-import "./window.ipc.ts"
-import "./ping.ipc.ts"
+import "./ipc"
+import { createWindow, RunningAnimal } from "src/main/utility"
 import "./data.service.ts"
 
 // 设置FFmpeg可执行文件的路径
@@ -96,7 +90,7 @@ app.whenReady().then(() => {
    * @param callback 回调函数，用于返回修改后的响应头信息。
    */
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    // 使用扩展运算符复制原有的响应头信息，并添加或修改Content-Security-Policy头部
+    // 使用复制原有的响应头信息，并添加或修改Content-Security-Policy头部
     callback({
       responseHeaders: {
         ...details.responseHeaders,
@@ -154,23 +148,4 @@ function createIndexWindow() {
     // 当此窗口被关闭时，触发应用程序退出
     window.on("closed", () => app.exit())
   })
-}
-
-/**
- * 定义了一组channel映射，用于规范不同操作的参数和返回值。
- */
-export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChannelMap, WindowInvokeChannelMap {
-  ping: {
-    args: ["123", 1]
-    return: void
-  }
-}
-
-// 定义一组用于向渲染进程传输数据的channel映射
-export interface TransferDataChannelMap extends PhotoTransferDataToRendererChannelMap {
-  "window:isMaximized": boolean
-  "window:isShow": boolean
-  "window:isFocus": boolean
-  "window:isFullscreen": boolean
-  "window:size": [number, number]
 }

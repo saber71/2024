@@ -1,7 +1,6 @@
 import { DataService } from "@main/data.service.ts"
 import { isImageExtName, isVideoExtName } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
-import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "@packages/electron"
 import type { FilterItem } from "@packages/filter"
 import { Ipc, IpcHandler } from "@packages/vue-class"
 import { app, BrowserWindow, dialog } from "electron"
@@ -9,6 +8,7 @@ import electronPosPrinter from "electron-pos-printer"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
 import { join } from "path"
+import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "src/main/utility"
 
 const { PosPrinter } = electronPosPrinter
 

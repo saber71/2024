@@ -2,7 +2,6 @@ import { HeartFilled, HeartOutlined } from "@ant-design/icons-vue"
 import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, remove, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
 import { stopPropagation } from "@packages/dom-common"
-import type { ImageInfo } from "@packages/electron"
 import {
   BindThis,
   Component,
@@ -21,6 +20,7 @@ import {
 } from "@packages/vue-class"
 import { type FilterType, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
 import { Checkbox, Flex } from "ant-design-vue"
+import type { ImageInfo } from "src/main/utility"
 import { type VNodeChild } from "vue"
 import "./index.scss"
 

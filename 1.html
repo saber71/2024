@@ -1,24 +1,89 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    *{
+      box-sizing: border-box;
+    }
+    body{
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 500px;
+      height: 100vh;
+    }
+    .plate_wrapper{
+      width: 200px;
+      height: 180px;
+      transform: rotateY(-33deg);
+    }
+    .plate_wrapper span{
+      background: #00E7FF;
+      display: inline-block;
+      width: 50%;
+      height: 50%;
+    }
+    .plate_wrapper span:nth-child(odd){
+      border-right: 4px solid #000;
+    }
+    svg{
+      position: absolute;
+      bottom: 10%;
+      transform: scale(.7);
+    }
+  </style>
 </head>
 <body>
-<script>
-  class A {
-    func1() {
-    }
-
-    func2() {
-    }
-
-    func3() {
-    }
-  }
-
-  const a = new A()
-  console.log(Object.keys(Object.getPrototypeOf(a)))
-</script>
+<div class="plate_wrapper">
+  <span></span><span></span><span></span><span></span>
+</div>
+<svg xmlns="http://www.w3.org/2000/svg" class="lds-microsoft" width="80px" height="80px" viewBox="0 0 100 100"
+     preserveAspectRatio="xMidYMid">
+  <g transform="rotate(0)">
+    <circle cx="81.73413361164941" cy="74.35045716034882" fill="#ffffff" r="5" transform="rotate(340.001 49.9999 50)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="0s" />
+    </circle>
+    <circle cx="74.35045716034882" cy="81.73413361164941" fill="#ffffff" r="5"
+            transform="rotate(348.352 50.0001 50.0001)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.0625s" />
+    </circle>
+    <circle cx="65.3073372946036" cy="86.95518130045147" fill="#ffffff" r="5" transform="rotate(354.236 50 50)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.125s" />
+    </circle>
+    <circle cx="55.22104768880207" cy="89.65779445495241" fill="#ffffff" r="5"
+            transform="rotate(357.958 50.0002 50.0002)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.1875s" />
+    </circle>
+    <circle cx="44.77895231119793" cy="89.65779445495241" fill="#ffffff" r="5"
+            transform="rotate(359.76 50.0064 50.0064)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.25s" />
+    </circle>
+    <circle cx="34.692662705396415" cy="86.95518130045147" fill="#ffffff" r="5" transform="rotate(0.183552 50 50)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.3125s" />
+    </circle>
+    <circle cx="25.649542839651176" cy="81.73413361164941" fill="#ffffff" r="5" transform="rotate(1.86457 50 50)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.375s" />
+    </circle>
+    <circle cx="18.2658663883506" cy="74.35045716034884" fill="#ffffff" r="5" transform="rotate(5.45126 50 50)">
+      <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;360 50 50" times="0;1"
+                        keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" begin="-0.4375s" />
+    </circle>
+    <animateTransform attributeName="transform" type="rotate" calcMode="spline" values="0 50 50;0 50 50" times="0;1"
+                      keySplines="0.5 0 0.5 1" repeatCount="indefinite" dur="1.5s" />
+  </g>
+</svg>
 </body>
 </html>

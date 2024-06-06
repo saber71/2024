@@ -1,4 +1,4 @@
-export * from "./createWindow"
+export * from "./createWindow.ts"
 export * from "./getImageInfo.ts"
 export * from "./createThumbnail.ts"
 export * from "./sendDataToWeb.ts"
