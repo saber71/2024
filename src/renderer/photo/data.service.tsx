@@ -1,5 +1,6 @@
 import { FolderOpenOutlined, PictureOutlined, StarOutlined } from "@ant-design/icons-vue"
 import type { Directory } from "@main/ipc/photo.ipc.ts"
+import { type ImageInfo } from "@main/utility"
 import { listen, remove, throttleFnImmediate } from "@packages/common"
 import {
   BindThis,
@@ -19,7 +20,6 @@ import { Input, type ItemType, Modal, notification } from "ant-design-vue"
 import type { Key } from "ant-design-vue/es/_util/type"
 import EventEmitter from "eventemitter3"
 import type { OverlayScrollbars } from "overlayscrollbars"
-import { type ImageInfo } from "src/main/utility"
 import { h, ref, type VNode } from "vue"
 
 type SortOrder = "birthtimeMs" | "mtimeMs" | "name"

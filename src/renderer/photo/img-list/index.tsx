@@ -1,4 +1,5 @@
 import { HeartFilled, HeartOutlined } from "@ant-design/icons-vue"
+import type { ImageInfo } from "@main/utility"
 import { fullyClick, type FullyClick, isImageExtName, isVideoExtName, remove, spread } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
 import { stopPropagation } from "@packages/dom-common"
@@ -20,7 +21,6 @@ import {
 } from "@packages/vue-class"
 import { type FilterType, PhotoDataService, photoEventBus } from "@renderer/photo/data.service.tsx"
 import { Checkbox, Flex } from "ant-design-vue"
-import type { ImageInfo } from "src/main/utility"
 import { type VNodeChild } from "vue"
 import "./index.scss"
 
@@ -35,7 +35,7 @@ interface Picture {
  * 定义一个 RowPicture 接口
  * 用于描述一行图片的数据结构
  */
-export interface RowPicture {
+interface RowPicture {
   index: number // 行索引，标识这一行的位置
   array: Array<Picture> // 图片信息数组，包含该行所有的图片信息
   complete: boolean

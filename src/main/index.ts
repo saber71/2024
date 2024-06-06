@@ -8,8 +8,8 @@ import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
 import "./ipc"
-import { createWindow, RunningAnimal } from "src/main/utility"
-import "./data.service.ts"
+import { createWindow, RunningAnimal } from "./utility"
+import "./service/data.service.ts"
 
 // 设置FFmpeg可执行文件的路径
 ffmpeg.setFfmpegPath(FfmpegPath)

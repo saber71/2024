@@ -1,14 +1,13 @@
-import { DataService } from "@main/data.service.ts"
+import { DataService, WindowService } from "@main/service"
+import { getImageInfo, type ImageInfo, sendDataToWeb } from "@main/utility"
 import { isImageExtName, isVideoExtName } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
-import type { FilterItem } from "@packages/filter"
 import { Ipc, IpcHandler } from "@packages/vue-class"
 import { app, BrowserWindow, dialog } from "electron"
 import electronPosPrinter from "electron-pos-printer"
 import { promises } from "node:fs"
 import { basename, extname } from "node:path"
 import { join } from "path"
-import { createWindow, getImageInfo, type ImageInfo, sendDataToWeb } from "src/main/utility"
 
 const { PosPrinter } = electronPosPrinter
 
@@ -16,14 +15,6 @@ const { PosPrinter } = electronPosPrinter
 export interface Directory {
   name: string //目录的名称
   path: string //目录的路径
-}
-
-interface Directories extends FilterItem {
-  array: Directory[]
-}
-
-interface Favorites extends FilterItem {
-  array: string[]
 }
 
 export interface PhotoInvokeChannelMap {
@@ -135,27 +126,15 @@ const ALL_FAVORITE = "photo:all_favorites"
 
 @Ipc()
 export class PhotoIpc {
-  /**
-   * 通过@Inject装饰器注入DataService实例
-   * 该注入操作主要用于依赖注入，使得在当前类中可以直接使用dataService实例来调用DataService提供的功能。
-   */
   @Inject() dataService: DataService
+  @Inject() windowService: WindowService
 
   /**
    * 打开一个照片窗口。
    */
-  @IpcHandler("photo:open") open() {
-    // 如果照片窗口已存在，则使其获得焦点，不再创建新窗口
-    if (this.dataService.photoWindow) {
-      this.dataService.photoWindow.focus()
-      return
-    }
-    // 创建一个新窗口用于显示照片，配置包括无边框、最大化、最小宽度和高度
-    createWindow({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 }).then((window) => {
-      this.dataService.photoWindow = window
-      // 当窗口关闭时，重置photoWindow的引用，防止其泄露
-      window.on("closed", () => (this.dataService.photoWindow = undefined))
-    })
+  @IpcHandler("photo:open")
+  async open() {
+    await this.windowService.open({ html: "photo", frame: false, maximize: true, minWidth: 900, minHeight: 670 })
   }
 
   /**
@@ -166,10 +145,7 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:updateFavorites")
   async updateFavorites(atomPaths: string[]) {
-    await this.dataService.collection.save<Favorites>({
-      _id: ALL_FAVORITE,
-      array: atomPaths
-    })
+    await this.dataService.set<string[]>(ALL_FAVORITE, atomPaths)
   }
 
   /**
@@ -180,16 +156,12 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:allFavorites")
   async allFavorites() {
-    let data = await this.dataService.collection.getById<Favorites>(ALL_FAVORITE)
+    let data = await this.dataService.get<string[]>(ALL_FAVORITE)
     if (!data) {
       // 如果记录不存在，则创建一个
-      const array = await this.dataService.collection.save<Favorites>({
-        array: [],
-        _id: ALL_FAVORITE
-      })
-      data = array[0]
+      data = await this.dataService.set<string[]>(ALL_FAVORITE, [])
     }
-    return data.array
+    return data
   }
 
   /**
@@ -198,10 +170,7 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:updateDirectories")
   async updateDirectories(directories: Directory[]) {
-    await this.dataService.collection.save<Directories>({
-      _id: ALL_DIRECTORIES,
-      array: directories
-    })
+    await this.dataService.set<Directory[]>(ALL_DIRECTORIES, directories)
   }
 
   /**
@@ -231,18 +200,14 @@ export class PhotoIpc {
    */
   @IpcHandler("photo:allDirectories")
   async allDirectories() {
-    let data = await this.dataService.collection.getById<Directories>(ALL_DIRECTORIES)
+    let data = await this.dataService.get<Directory[]>(ALL_DIRECTORIES)
     if (!data) {
       // 如果记录不存在，则创建一个包含图片路径的记录。
       const picturePath = app.getPath("pictures")
       const directoryName = basename(picturePath)
-      const array = await this.dataService.collection.save<Directories>({
-        array: [{ name: directoryName, path: picturePath }],
-        _id: ALL_DIRECTORIES
-      })
-      data = array[0]
+      data = await this.dataService.set<Directory[]>(ALL_DIRECTORIES, [{ name: directoryName, path: picturePath }])
     }
-    return data.array
+    return data
   }
 
   /**

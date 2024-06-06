@@ -1,3 +1,4 @@
+import { extractFilePathFromAtomUrl, toAtomUrl } from "@main/utility"
 import type { InvokeChannelMap } from "@packages/exposed"
 import { Ipc, IpcHandler } from "@packages/vue-class"
 import { clipboard, dialog, type OpenDialogOptions, type SaveDialogOptions, shell } from "electron"
@@ -5,7 +6,6 @@ import fsExtra from "fs-extra"
 import { promises } from "node:fs"
 import { basename, dirname } from "node:path"
 import { join } from "path"
-import { extractFilePathFromAtomUrl, toAtomUrl } from "src/main/utility"
 
 export interface FsInvokeChannelMap {
   // 显示保存对话框
