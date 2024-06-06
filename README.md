@@ -31,6 +31,6 @@ $ pnpm build:linux
 
 ## 记录
 
-### 复制文件
+### 复制文件到剪切板
 
 `pnpm add clipboard-files`。支持windows，可能也支持mac，但不支持linux
