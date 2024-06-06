@@ -2,10 +2,6 @@
 
 An Electron application with Vue and TypeScript
 
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin)
-
 ## Project Setup
 
 ### Install
@@ -32,3 +28,9 @@ $ pnpm build:mac
 # For Linux
 $ pnpm build:linux
 ```
+
+## 记录
+
+### 复制文件
+
+`pnpm add clipboard-files`。支持windows，可能也支持mac，但不支持linux
