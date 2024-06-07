@@ -1,7 +1,8 @@
 import { electronApp, optimizer } from "@electron-toolkit/utils"
 import { path as FfmpegPath } from "@ffmpeg-installer/ffmpeg"
 import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
-import { SyncData, VueClass } from "@packages/vue-class"
+import { Channel, SyncData } from "@packages/sync"
+import { VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
 import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
@@ -47,6 +48,16 @@ SyncData.emit = (channel, args) => {
     if (window.id === args.fromId) return
     window.webContents.send(channel, args)
   })
+}
+
+Channel.on = (channel, callback) => {
+  ipcMain.on(channel, (_, args) => callback(args))
+}
+
+Channel.emit = (channel, data) => {
+  const window = BrowserWindow.fromId(data.windowId)
+  if (window) window.webContents.send(channel, data)
+  else throw new Error("Unable to find window object corresponding to windowId " + data.windowId)
 }
 
 VueClassMetadata.ipcHandler = (channel, callback) => {

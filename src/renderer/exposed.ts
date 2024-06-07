@@ -4,7 +4,8 @@
  * 以及提供用于动态获取窗口信息和与 IPC 通信的函数。
  */
 import type { Exposed, TransferDataToMainChannelMap, TransferDataToRendererChannelMap } from "@packages/exposed"
-import { SyncData } from "@packages/vue-class"
+import { Channel, SyncData } from "@packages/sync"
+import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
 import { ref, type Ref, unref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
@@ -16,13 +17,6 @@ const exposed: Exposed = window as any
  * 也不直接返回任何值，但保存了electronApi的引用以供后续使用
  */
 const electronApi = exposed.electronApi
-
-SyncData.on = (channel, callback) => {
-  electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
-}
-SyncData.emit = (channel, args) => {
-  electronApi.ipcRenderer.send(channel, args)
-}
 
 /**
  * 获取并保存exposed对象中的api属性。
@@ -105,3 +99,50 @@ export function transferDataToMain<Channel extends keyof TransferDataToMainChann
   // 通过 electronApi.ipcRenderer 发送数据到主进程。
   electronApi.ipcRenderer.send(channel, value)
 }
+
+// 等待窗口信息异步获取窗口ID
+SyncData.id = await windowInfo.id
+
+/**
+ * 在客户端上注册一个IPC监听器。
+ * @param channel IPC通道名称。
+ * @param callback 接收到消息时调用的回调函数。
+ */
+SyncData.on = (channel, callback) => {
+  electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
+}
+
+/**
+ * 向主进程发送IPC消息。
+ * @param channel IPC通道名称。
+ * @param args 传递给主进程的消息参数。
+ */
+SyncData.emit = (channel, args) => {
+  electronApi.ipcRenderer.send(channel, args)
+}
+
+// 将窗口ID赋值给Channel对象
+Channel.id = SyncData.id
+
+/**
+ * 在客户端上注册一个IPC监听器。
+ * @param channel IPC通道名称。
+ * @param callback 接收到消息时调用的回调函数。
+ */
+Channel.on = (channel, callback) => {
+  electronApi.ipcRenderer.on(channel, (_, args) => callback(args))
+}
+
+/**
+ * 向主进程发送IPC消息。
+ * @param channel IPC通道名称。
+ * @param args 传递给主进程的消息参数。
+ */
+Channel.emit = (channel, args) => {
+  electronApi.ipcRenderer.send(channel, args)
+}
+
+// 为Vue类元数据提供方法调用
+VueClassMetadata.invokeFn = invoke
+// 为Vue类元数据提供IPC监听方法
+VueClassMetadata.listenIpc = listenIpcFromMain as any

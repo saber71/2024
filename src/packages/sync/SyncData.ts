@@ -36,10 +36,10 @@ export class SyncData<Value> {
     this.channels.getValue.request += name
     this.channels.getValue.response += name
     this.channels.setValue += name
-    this.channels.updateObjectValue += name
-    this.channels.appendArrayValue += name
-    this.channels.removeArrayValue += name
-    this.channels.removeObjectValue += name
+    this.channels.array.append += name
+    this.channels.array.remove += name
+    this.channels.object.set += name
+    this.channels.object.delete += name
 
     // 监听getValue的响应，更新本地值。
     SyncData.on(this.channels.getValue.response, (data) => {
@@ -60,26 +60,28 @@ export class SyncData<Value> {
       this._refValue.value = data.value
     })
     // 监听appendArrayValue事件，向数组中添加元素。
-    SyncData.on(this.channels.appendArrayValue, (data) => {
+    SyncData.on(this.channels.array.append, (data) => {
       const value = this.value
       if (value instanceof Array) value.push(...data.value)
       else throw new Error("value is not array")
     })
     // 监听removeArrayValue事件，从数组中移除元素。
-    SyncData.on(this.channels.removeArrayValue, (data) => {
+    SyncData.on(this.channels.array.remove, (data) => {
       const value = this.value
       if (value instanceof Array) remove(value, data.value)
       else throw new Error("value is not array")
     })
     // 监听removeObjectValue事件，删除对象的属性。
-    SyncData.on(this.channels.removeObjectValue, (data) => {
+    SyncData.on(this.channels.object.delete, (data) => {
       for (let key of data.value) {
         delete (this.value as any)[key]
       }
     })
     // 监听updateObjectValue事件，更新对象的属性值。
-    SyncData.on(this.channels.updateObjectValue, (data) => {
-      ;(this.value as any)[data.value.key] = data.value.value
+    SyncData.on(this.channels.object.set, (data) => {
+      for (let { key, value } of data.value) {
+        ;(this.value as any)[key] = value
+      }
     })
   }
 
@@ -115,10 +117,14 @@ export class SyncData<Value> {
       request: "getValue:request:"
     },
     setValue: "setValue:",
-    appendArrayValue: "appendArrayValue:",
-    removeArrayValue: "removeArrayValue:",
-    removeObjectValue: "removeObjectValue:",
-    updateObjectValue: "updateObjectValue:"
+    array: {
+      append: "appendArray:",
+      remove: "removeArray:"
+    },
+    object: {
+      set: "setObjectKeys:",
+      delete: "deleteObjectKeys:"
+    }
   }
 
   /**
@@ -135,7 +141,7 @@ export class SyncData<Value> {
   }
 
   // 返回当前的数据值。
-  get value() {
+  get value(): Readonly<Value> {
     return this._refValue.value
   }
 
@@ -162,12 +168,12 @@ export class SyncData<Value> {
    * 如果当前值不是数组，则抛出错误。
    * @param items 要追加的值的数组
    */
-  appendArrayValue(...items: ExtractArrayGenericType<Value>[]) {
+  append(...items: ExtractArrayGenericType<Value>[]) {
     if (items.length === 0) return
     const value = this.value
     if (value instanceof Array) {
       value.push(...items)
-      SyncData.emit(this.channels.appendArrayValue, { fromId: SyncData.id, value: items })
+      SyncData.emit(this.channels.array.append, { fromId: SyncData.id, value: items })
     } else throw new Error("value is not array")
   }
 
@@ -175,7 +181,7 @@ export class SyncData<Value> {
    * 向数组值中添加新元素，但避免重复。
    * @param items 要添加到数组的元素列表。
    */
-  appendArrayValueNoRepeat(...items: ExtractArrayGenericType<Value>[]) {
+  appendNoRepeat(...items: ExtractArrayGenericType<Value>[]) {
     if (items.length === 0) return
     const value = this.value
     if (value instanceof Array) {
@@ -188,7 +194,7 @@ export class SyncData<Value> {
         }
       }
       if (noRepeats.length === 0) return
-      SyncData.emit(this.channels.appendArrayValue, { fromId: SyncData.id, value: noRepeats })
+      SyncData.emit(this.channels.array.append, { fromId: SyncData.id, value: noRepeats })
     } else throw new Error("value is not array")
   }
 
@@ -196,36 +202,40 @@ export class SyncData<Value> {
    * 从数组中移除指定的元素。
    * @param items 要从数组中移除的元素列表。
    */
-  removeArrayValue(...items: ExtractArrayGenericType<Value>[]) {
+  remove(...items: ExtractArrayGenericType<Value>[]) {
     if (items.length === 0) return
     const value = this.value
     if (value instanceof Array) {
       remove(value, items)
-      SyncData.emit(this.channels.removeArrayValue, { fromId: SyncData.id, value: items })
+      SyncData.emit(this.channels.array.remove, { fromId: SyncData.id, value: items })
     } else throw new Error("value is not array")
   }
 
   /**
-   * 更新对象的某个属性值。
-   * @param key 要更新的属性的键。
-   * @param value 要更新的属性的新值。
+   * 更新对象的某些属性值。
    */
-  updateObjectValue<Key extends keyof Value>(key: Key, value: Value[Key]) {
-    const oldValue = this.value[key]
-    if (oldValue === value) return
-    this.value[key] = oldValue
-    SyncData.emit(this.channels.updateObjectValue, { fromId: SyncData.id, value: { key, value } })
+  set(...items: Array<{ key: keyof Value; value: Value[keyof Value] }>) {
+    if (items.length === 0) return
+    const result: any[] = []
+    for (let item of items) {
+      const { key, value } = item
+      const oldValue = this.value[key]
+      if (oldValue === value) continue
+      ;(this.value as any)[key] = oldValue
+      result.push(item)
+    }
+    if (result.length) SyncData.emit(this.channels.object.set, { fromId: SyncData.id, value: result })
   }
 
   /**
    * 移除对象中的多个属性。
    * @param keys 要移除的属性的键列表。
    */
-  removeObjectValue(...keys: Array<keyof Value>) {
+  delete(...keys: Array<keyof Value>) {
     if (keys.length) return
     for (let key of keys) {
       delete this.value[key]
     }
-    SyncData.emit(this.channels.updateObjectValue, { fromId: SyncData.id, value: keys })
+    SyncData.emit(this.channels.object.delete, { fromId: SyncData.id, value: keys })
   }
 }
