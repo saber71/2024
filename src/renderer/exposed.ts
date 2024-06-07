@@ -122,7 +122,7 @@ SyncData.emit = (channel, args) => {
 }
 
 // 将窗口ID赋值给Channel对象
-Channel.windowId = SyncData.id
+Channel.curDefaultWindowId = Channel.windowId = SyncData.id
 
 /**
  * 在客户端上注册一个IPC监听器。
