@@ -11,7 +11,12 @@ type InitValue<Value> =
   | Value
   | (() => Value)
   | {
-      fn: () => Value
+      value: (() => Value) | Value
+      setValue?: () => Value
+      set?: () => Array<{ key: keyof Value; value: Value[keyof Value] }>
+      delete?: () => Array<keyof Value>
+      append?: () => ExtractArrayGenericType<Value>[]
+      remove?: () => ExtractArrayGenericType<Value>[]
       interval: number
     }
 
@@ -63,13 +68,19 @@ export class Channel<Value> {
     /**
      * 根据初始化值的类型，设置_ref的引用。
      * 如果初始化值是函数，则直接调用该函数并设置结果为_ref的引用。
-     * 如果初始化值是对象，并且包含fn和interval属性，则将fn函数调用的结果设置为_ref的引用，并定时调用fn函数。
+     * 如果初始化值是对象，则将value函数调用的结果设置为_ref的引用，并定时调用函数。
      * 其他情况下，直接将初始化值设置为_ref的引用。
      */
     if (typeof initValue === "function") this._ref = ref((initValue as any)()) as any
-    else if (typeof initValue === "object" && initValue && "fn" in initValue && "interval" in initValue) {
-      this._ref = ref(initValue.fn()) as any
-      this._intervalHandler = setInterval(initValue.fn, initValue.interval)
+    else if (typeof initValue === "object" && initValue && "interval" in initValue) {
+      this._ref = ref(typeof initValue.value === "function" ? (initValue.value as Function)() : initValue.value) as any
+      this._intervalHandler = setInterval(() => {
+        if (typeof initValue.setValue === "function") this.setValue(initValue.setValue())
+        if (typeof initValue.set === "function") this.set(...initValue.set())
+        if (typeof initValue.append === "function") this.append(...initValue.append())
+        if (typeof initValue.remove === "function") this.remove(...initValue.remove())
+        if (typeof initValue.delete === "function") this.delete(...initValue.delete())
+      }, initValue.interval)
     } else this._ref = ref(initValue) as any
 
     /**
