@@ -1,3 +1,4 @@
+import { mainEventBus } from "@main/eventBus.ts"
 import { createWindow, type CreateWindowOptions } from "@main/utility"
 import { Service } from "@packages/vue-class"
 import type { BrowserWindow } from "electron"
@@ -14,6 +15,10 @@ export class WindowService {
    * 这样做的目的是为了确保相同的HTML内容只创建一个窗口。
    */
   private readonly _map = new Map<CreateWindowOptions["html"], BrowserWindow>()
+
+  getWindow(key: CreateWindowOptions["html"]) {
+    return this._map.get(key)
+  }
 
   /**
    * 根据提供的选项异步打开一个窗口。
@@ -32,9 +37,11 @@ export class WindowService {
     } else {
       // 如果不存在，创建一个新窗口
       const win = await createWindow(option)
+      mainEventBus.emit("onCreateWindow", html)
       // 在窗口关闭时，从映射中删除对应的条目
       win.on("closed", () => {
         this._map.delete(html)
+        mainEventBus.emit("onWindowClosed", html)
       })
       return win
     }

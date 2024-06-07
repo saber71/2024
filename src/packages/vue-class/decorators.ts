@@ -7,9 +7,9 @@ import type EventEmitter from "eventemitter3"
 import { type WatchOptions } from "vue"
 import type { RouteLocationNormalized } from "vue-router"
 import type { Class } from "../common"
-import { Injectable } from "../dependency-injection"
+import { getDecoratedName, Injectable } from "../dependency-injection"
 import { ModuleName } from "./constants"
-import { applyMetadata, type ComponentOption, getOrCreateMetadata } from "./metadata"
+import { applyMetadata, type ComponentOption, getOrCreateMetadata, VueClassMetadata } from "./metadata"
 import type { VueComponentClass } from "./types"
 import { VueComponent, type VueComponentBaseProps } from "./vue-component"
 import type { VueDirective } from "./vue-directive"
@@ -462,6 +462,25 @@ export function IpcHandler(channel: keyof InvokeChannelMap) {
       methodOrProp: getName(arg), // 获取方法或属性名
       channel // 添加频道信息
     })
+  }
+}
+
+/**
+ * 定义一个自定义处理函数，用于在Vue组件中处理特定的属性或方法。
+ * @param options 配置选项，包含处理函数和可选参数。
+ * @param options.fn 处理函数，当组件实例、元数据和属性名传入时被调用。
+ * @param options.args 处理函数的可选参数。
+ * @returns 返回一个装饰器，用于标记Vue组件类的属性或方法。
+ */
+export function CustomHandler(options: {
+  fn: (instance: any, metadata: VueClassMetadata, propName: string) => void
+  args?: any
+}) {
+  // 返回一个装饰器函数，该函数接受目标对象和属性名/方法名作为参数
+  return (target: object, arg: any) => {
+    // 通过getOrCreateMetadata函数获取或创建目标对象的元数据，并在其中添加或更新自定义处理函数信息
+    // 为指定的目标对象和方法名添加或获取元数据，并将当前的自定义处理信息（名称和方法名）添加到元数据的customHandlers数组中
+    getOrCreateMetadata(target, arg).customHandlers[getDecoratedName(arg)] = options
   }
 }
 

@@ -122,7 +122,7 @@ SyncData.emit = (channel, args) => {
 }
 
 // 将窗口ID赋值给Channel对象
-Channel.id = SyncData.id
+Channel.windowId = SyncData.id
 
 /**
  * 在客户端上注册一个IPC监听器。
@@ -140,6 +140,10 @@ Channel.on = (channel, callback) => {
  */
 Channel.emit = (channel, args) => {
   electronApi.ipcRenderer.send(channel, args)
+}
+
+Channel.off = (channel) => {
+  electronApi.ipcRenderer.removeAllListeners(channel)
 }
 
 // 为Vue类元数据提供方法调用

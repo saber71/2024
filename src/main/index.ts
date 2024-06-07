@@ -10,7 +10,7 @@ import * as process from "node:process"
 import * as url from "node:url"
 import "./ipc"
 import { createWindow, RunningAnimal } from "./utility"
-import "./service/data.service.ts"
+import "@main/services/data.service.ts"
 
 // 设置FFmpeg可执行文件的路径
 ffmpeg.setFfmpegPath(FfmpegPath)
@@ -58,6 +58,10 @@ Channel.emit = (channel, data) => {
   const window = BrowserWindow.fromId(data.windowId)
   if (window) window.webContents.send(channel, data)
   else throw new Error("Unable to find window object corresponding to windowId " + data.windowId)
+}
+
+Channel.off = (channel) => {
+  ipcMain.removeAllListeners(channel)
 }
 
 VueClassMetadata.ipcHandler = (channel, callback) => {

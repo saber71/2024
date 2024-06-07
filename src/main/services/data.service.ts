@@ -3,7 +3,7 @@ import { Service } from "@packages/vue-class"
 
 @Service()
 export class DataService {
-  // 创建一个名为"main"的集合，用于存储目录信息。
+  // 创建一个名为"user-data"的集合，用于存储信息。
   readonly collection = new Collection("user-data")
 
   async set<Value>(id: string, value: Value) {

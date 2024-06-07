@@ -1,4 +1,4 @@
-import { DataService, WindowService } from "@main/service"
+import { DataService, WindowService } from "@main/services"
 import { getImageInfo, type ImageInfo, sendDataToWeb } from "@main/utility"
 import { isImageExtName, isVideoExtName } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"

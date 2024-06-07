@@ -9,6 +9,10 @@ import { VueRouterGuard } from "./vue-router-guard"
 export class VueClass {
   private static readonly _dependencyInjection = new LoadableContainer()
 
+  static getContainer() {
+    return this._dependencyInjection
+  }
+
   static getInstance<T>(clazz: Class<T>): T {
     return this.getValue(clazz.name)
   }

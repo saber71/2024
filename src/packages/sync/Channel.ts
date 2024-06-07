@@ -1,5 +1,4 @@
 import { type ExtractArrayGenericType, isBrowser, remove } from "@packages/common"
-import { SyncData } from "@packages/sync/SyncData.ts"
 import { ref, type Ref } from "vue"
 
 interface Data<Value = any> {
@@ -7,18 +6,22 @@ interface Data<Value = any> {
   windowId: number
 }
 
+type IntervalCallback<Value> = {
+  value?: (() => Value) | Value
+  setValue?: (windowId: number) => Value
+  set?: (windowId: number) => Array<{ key: keyof Value; value: Value[keyof Value] }>
+  delete?: (windowId: number) => Array<keyof Value>
+  append?: (windowId: number) => ExtractArrayGenericType<Value>[]
+  remove?: (windowId: number) => ExtractArrayGenericType<Value>[]
+  interval: number
+}
+
 type InitValue<Value> =
   | Value
   | (() => Value)
-  | {
+  | (IntervalCallback<Value> & {
       value: (() => Value) | Value
-      setValue?: () => Value
-      set?: () => Array<{ key: keyof Value; value: Value[keyof Value] }>
-      delete?: () => Array<keyof Value>
-      append?: () => ExtractArrayGenericType<Value>[]
-      remove?: () => ExtractArrayGenericType<Value>[]
-      interval: number
-    }
+    })
 
 /**
  * 用于在主进程和指定的窗口间同步数据。
@@ -28,7 +31,10 @@ export class Channel<Value> {
   /**
    * 当前环境所属窗口id。如果是主进程，则为-1
    */
-  static id: number = -1
+  static windowId: number = -1
+
+  // 创建Channel时使用的默认窗口id
+  static curDefaultWindowId: number = -1
 
   /**
    * 订阅指定频道的事件。
@@ -45,6 +51,8 @@ export class Channel<Value> {
    */
   static emit: (channel: string, data: Data) => void
 
+  static off: (channel: string) => void
+
   /**
    * 静态方法：根据给定参数创建一个新的Channel实例。
    * 该方法主要用于初始化一个通道，并在浏览器环境中触发一个获取初始值的事件。
@@ -54,7 +62,7 @@ export class Channel<Value> {
    * @param windowId 通道关联的窗口ID，默认为SyncData的id。窗口ID用于区分不同窗口间的通道。
    * @returns 返回创建的Channel实例。
    */
-  static create<Value>(name: string, initValue: InitValue<Value>, windowId: number = SyncData.id) {
+  static create<Value>(name: string, initValue: InitValue<Value>, windowId: number = Channel.curDefaultWindowId) {
     const data = new Channel<Value>(name, initValue, windowId)
     if (isBrowser) Channel.emit(data.eventNames.getValue.request, { value: null, windowId })
     return data
@@ -73,34 +81,28 @@ export class Channel<Value> {
      */
     if (typeof initValue === "function") this._ref = ref((initValue as any)()) as any
     else if (typeof initValue === "object" && initValue && "interval" in initValue) {
-      this._ref = ref(typeof initValue.value === "function" ? (initValue.value as Function)() : initValue.value) as any
-      this._intervalHandler = setInterval(() => {
-        if (typeof initValue.setValue === "function") this.setValue(initValue.setValue())
-        if (typeof initValue.set === "function") this.set(...initValue.set())
-        if (typeof initValue.append === "function") this.append(...initValue.append())
-        if (typeof initValue.remove === "function") this.remove(...initValue.remove())
-        if (typeof initValue.delete === "function") this.delete(...initValue.delete())
-      }, initValue.interval)
+      this._ref = ref() as any
+      this.setIntervalCallback(initValue)
     } else this._ref = ref(initValue) as any
 
     /**
      * 设置相关窗口的ID，并根据名称前缀生成事件名。
      */
-    this._relateWindowId = relateWindowId
+    this.relateWindowId = relateWindowId
 
-    this.eventNames.getValue.request += name + this._relateWindowId
-    this.eventNames.getValue.response += name + this._relateWindowId
-    this.eventNames.sync += name + this._relateWindowId
-    this.eventNames.array.append += name + this._relateWindowId
-    this.eventNames.array.remove += name + this._relateWindowId
-    this.eventNames.object.set += name + this._relateWindowId
-    this.eventNames.object.delete += name + this._relateWindowId
+    this.eventNames.getValue.request += name
+    this.eventNames.getValue.response += name
+    this.eventNames.sync += name
+    this.eventNames.array.append += name
+    this.eventNames.array.remove += name
+    this.eventNames.object.set += name
+    this.eventNames.object.delete += name
 
     /**
      * 监听getValue.request事件，当收到请求时，如果请求来源与当前窗口ID匹配，则响应请求并发送当前值。
      */
     Channel.on(this.eventNames.getValue.request, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       Channel.emit(this.eventNames.getValue.response, {
         value: this.value,
         windowId: data.windowId
@@ -111,7 +113,7 @@ export class Channel<Value> {
      * 监听getValue.response事件，当收到响应时，如果响应来源与当前窗口ID匹配，则更新_ref的值。
      */
     Channel.on(this.eventNames.getValue.response, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       this._ref.value = data.value
     })
 
@@ -119,7 +121,7 @@ export class Channel<Value> {
      * 监听sync事件，当收到同步请求时，如果请求来源与当前窗口ID匹配，则更新_ref的值。
      */
     Channel.on(this.eventNames.sync, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       this._ref.value = data.value
     })
 
@@ -127,7 +129,7 @@ export class Channel<Value> {
      * 监听array.append事件，当收到数组追加请求时，如果请求来源与当前窗口ID匹配且当前值是数组，则追加元素。
      */
     Channel.on(this.eventNames.array.append, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       if (this.value instanceof Array) this.value.push(...data.value)
       else throw new Error("value is not array")
     })
@@ -136,7 +138,7 @@ export class Channel<Value> {
      * 监听array.remove事件，当收到数组移除请求时，如果请求来源与当前窗口ID匹配且当前值是数组，则移除元素。
      */
     Channel.on(this.eventNames.array.remove, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       if (this.value instanceof Array) {
         for (let item of data.value) {
           remove(this.value, item)
@@ -148,7 +150,7 @@ export class Channel<Value> {
      * 监听object.set事件，当收到对象属性设置请求时，如果请求来源与当前窗口ID匹配，则设置对象属性。
      */
     Channel.on(this.eventNames.object.set, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       for (let { key, value } of data.value) {
         ;(this.value as any)[key] = value
       }
@@ -158,7 +160,7 @@ export class Channel<Value> {
      * 监听object.delete事件，当收到对象属性删除请求时，如果请求来源与当前窗口ID匹配，则删除对象属性。
      */
     Channel.on(this.eventNames.object.delete, (data) => {
-      if (data.windowId !== this._relateWindowId) return
+      if (data.windowId !== this.relateWindowId) return
       for (let key of data.value) {
         delete (this.value as any)[key]
       }
@@ -166,11 +168,12 @@ export class Channel<Value> {
   }
 
   // 相关窗口的ID，用于标识数据来源。
-  private readonly _relateWindowId: number
+  relateWindowId: number
+
   /**
    * 定义了一个私有的、只读的间隔处理程序属性，用于处理定时任务。
    */
-  private readonly _intervalHandler: any
+  private _intervalHandler: any
 
   /**
    * 定义了一个私有的、只读的引用属性，用于存储和访问特定于实现的值。
@@ -204,19 +207,52 @@ export class Channel<Value> {
   }
 
   /**
+   * 设置一个定时器，根据传入的回调函数定期更新组件的值或状态。
+   * @param intervalCallback 一个包含各种操作方法和间隔时间的对象。
+   *                         这些方法可以在指定的时间间隔内被调用，以更新组件的状态或值。
+   */
+  setIntervalCallback(intervalCallback: IntervalCallback<Value>) {
+    // 如果已存在定时器，则清除之前的定时器，避免重复执行。
+    if (this._intervalHandler) clearInterval(this._intervalHandler)
+
+    // 检查intervalCallback是否包含value属性，并且如果是函数，则调用该函数并设置组件的值。
+    if ("value" in intervalCallback) {
+      if (typeof intervalCallback.value === "function") this.setValue((intervalCallback.value as any)())
+      else this.setValue(intervalCallback.value as any)
+    }
+
+    // 设置一个新的定时器，根据intervalCallback中定义的方法定期更新组件。
+    // 这包括设置新值、执行各种操作如添加、删除等，具体操作取决于intervalCallback中定义的方法。
+    this._intervalHandler = setInterval(() => {
+      if (typeof intervalCallback.setValue === "function") this.setValue(intervalCallback.setValue(this.relateWindowId))
+      if (typeof intervalCallback.set === "function") this.set(...intervalCallback.set(this.relateWindowId))
+      if (typeof intervalCallback.append === "function") this.append(...intervalCallback.append(this.relateWindowId))
+      if (typeof intervalCallback.remove === "function") this.remove(...intervalCallback.remove(this.relateWindowId))
+      if (typeof intervalCallback.delete === "function") this.delete(...intervalCallback.delete(this.relateWindowId))
+    }, intervalCallback.interval)
+  }
+
+  /**
    * 销毁实例，清除定时器。
    */
   dispose() {
     if (this._intervalHandler) {
       clearInterval(this._intervalHandler)
     }
+    Channel.off(this.eventNames.array.append)
+    Channel.off(this.eventNames.array.remove)
+    Channel.off(this.eventNames.object.delete)
+    Channel.off(this.eventNames.object.set)
+    Channel.off(this.eventNames.sync)
+    Channel.off(this.eventNames.getValue.request)
+    Channel.off(this.eventNames.getValue.response)
   }
 
   /**
    * 立即同步当前值到通道。
    */
   flush() {
-    Channel.emit(this.eventNames.sync, { value: this.value, windowId: this._relateWindowId })
+    Channel.emit(this.eventNames.sync, { value: this.value, windowId: this.relateWindowId })
   }
 
   /**
@@ -226,7 +262,7 @@ export class Channel<Value> {
   setValue(value: Value) {
     if (value === this.value) return
     this._ref.value = value
-    Channel.emit(this.eventNames.sync, { value, windowId: this._relateWindowId })
+    Channel.emit(this.eventNames.sync, { value, windowId: this.relateWindowId })
   }
 
   /**
@@ -238,7 +274,7 @@ export class Channel<Value> {
     const value = this.value
     if (value instanceof Array) value.push(...items)
     else throw new Error("value is not array")
-    Channel.emit(this.eventNames.array.append, { value: items, windowId: this._relateWindowId })
+    Channel.emit(this.eventNames.array.append, { value: items, windowId: this.relateWindowId })
   }
 
   /**
@@ -255,7 +291,7 @@ export class Channel<Value> {
         result.push(item)
         value.push(item)
       }
-      if (result.length) Channel.emit(this.eventNames.array.append, { value: result, windowId: this._relateWindowId })
+      if (result.length) Channel.emit(this.eventNames.array.append, { value: result, windowId: this.relateWindowId })
     } else throw new Error("value is not array")
   }
 
@@ -266,7 +302,7 @@ export class Channel<Value> {
   remove(...items: ExtractArrayGenericType<Value>[]) {
     if (items.length === 0) return
     remove(this.value as any, items)
-    Channel.emit(this.eventNames.array.remove, { value: items, windowId: this._relateWindowId })
+    Channel.emit(this.eventNames.array.remove, { value: items, windowId: this.relateWindowId })
   }
 
   /**
@@ -283,7 +319,7 @@ export class Channel<Value> {
       ;(this.value as any)[key] = value
       result.push(item)
     }
-    if (result.length) Channel.emit(this.eventNames.object.set, { value: result, windowId: this._relateWindowId })
+    if (result.length) Channel.emit(this.eventNames.object.set, { value: result, windowId: this.relateWindowId })
   }
 
   /**
@@ -295,6 +331,6 @@ export class Channel<Value> {
     for (let key of items) {
       delete (this.value as any)[key]
     }
-    Channel.emit(this.eventNames.object.delete, { value: items, windowId: this._relateWindowId })
+    Channel.emit(this.eventNames.object.delete, { value: items, windowId: this.relateWindowId })
   }
 }

@@ -30,7 +30,7 @@ import {
 } from "vue"
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from "vue-router"
 import { type Class, debounce, deepClone, throttle } from "../common"
-import { type HookType, type WatcherTarget } from "./decorators"
+import { type CustomHandler, type HookType, type WatcherTarget } from "./decorators"
 import { VueComponent } from "./vue-component"
 import { VueDirective } from "./vue-directive"
 import { VueService } from "./vue-service"
@@ -132,6 +132,8 @@ export class VueClassMetadata {
 
   readonly computers: string[] = []
 
+  readonly customHandlers: Record<string | symbol, Parameters<typeof CustomHandler>[0]> = {}
+
   clone() {
     return deepClone(this) as VueClassMetadata
   }
@@ -208,16 +210,17 @@ export class VueClassMetadata {
   handleEventListener(instance: object) {
     for (let item of this.eventListener) {
       const method = (instance as any)[item.methodName].bind(instance)
-      if (typeof item.eventTarget === "string") {
-        const className = item.eventTarget
+      const eventTarget = item.eventTarget
+      if (typeof eventTarget === "string") {
+        const className = eventTarget
         onMounted(() => {
           const array = document.getElementsByClassName(className)
           for (let el of array) {
             el.addEventListener(item.eventName, method)
           }
         })
-      } else if (item.eventTarget instanceof EventEmitter) item.eventTarget.on(item.eventName, method)
-      else item.eventTarget.addEventListener(item.eventName, method)
+      } else if (eventTarget instanceof EventEmitter) eventTarget.on(item.eventName, method)
+      else eventTarget.addEventListener(item.eventName, method)
     }
   }
 
@@ -432,6 +435,12 @@ export class VueClassMetadata {
       }
     }
   }
+
+  handleCustomHandler(instance: any) {
+    Object.entries(this.customHandlers).forEach(([propName, options]) => {
+      options.fn(instance, this, propName)
+    })
+  }
 }
 
 const metadataMap = new Map<any, VueClassMetadata>()
@@ -466,6 +475,7 @@ export function applyMetadata(clazz: any, instance: VueService | object) {
   metadata.handleIpcReceived(instance)
   metadata.handleIpcSync(instance)
   metadata.handleIpcHandler(instance)
+  metadata.handleCustomHandler(instance)
   if (instance instanceof VueComponent) {
     metadata.handleLink(instance)
     metadata.handleHook(instance)
