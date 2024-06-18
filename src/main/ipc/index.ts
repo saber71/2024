@@ -24,4 +24,5 @@ export interface TransferDataChannelMap extends PhotoTransferDataToRendererChann
   "window:isFocus": boolean
   "window:isFullscreen": boolean
   "window:size": [number, number]
+  error: Error
 }

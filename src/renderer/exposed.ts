@@ -6,6 +6,7 @@
 import type { Exposed, TransferDataToMainChannelMap, TransferDataToRendererChannelMap } from "@packages/exposed"
 import { Channel, SyncData } from "@packages/sync"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
+import { notification } from "ant-design-vue"
 import { ref, type Ref, unref, type UnwrapRef } from "vue"
 
 // 将 `window` 对象强制转换为 `Exposed` 类型，以获取或设置其特定属性。
@@ -150,3 +151,18 @@ Channel.off = (channel) => {
 VueClassMetadata.invokeFn = invoke
 // 为Vue类元数据提供IPC监听方法
 VueClassMetadata.listenIpc = listenIpcFromMain as any
+
+/**
+ * 监听来自主进程的错误事件。
+ *
+ * 通过订阅error事件，当主进程发送错误消息时，此回调函数将被触发。
+ * 它使用notification.error显示一个持续时间无限的错误通知，以提醒用户发生了错误。
+ * 这种方式有利于在渲染进程（前端）中处理主进程（后端）抛出的错误，保持用户界面的响应性和提供错误反馈。
+ */
+listenIpcFromMain("error", (err) => {
+  notification.error({
+    message: "错误",
+    description: err.message,
+    duration: 0
+  })
+})

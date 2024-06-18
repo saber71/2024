@@ -4,7 +4,7 @@ import { path as FfprobePath } from "@ffprobe-installer/ffprobe"
 import { Channel, SyncData } from "@packages/sync"
 import { VueClass } from "@packages/vue-class"
 import { VueClassMetadata } from "@packages/vue-class/metadata.ts"
-import { app, BrowserWindow, ipcMain, net, protocol, session } from "electron"
+import { app, BrowserWindow, ipcMain, net, Notification, protocol, session } from "electron"
 import ffmpeg from "fluent-ffmpeg"
 import * as process from "node:process"
 import * as url from "node:url"
@@ -71,6 +71,16 @@ VueClassMetadata.ipcHandler = (channel, callback) => {
 VueClassMetadata.listenIpc = (channel, callback: any) => {
   ipcMain.on(channel, (event, ...args) => callback(...args, event))
   return () => ipcMain.off(channel, callback)
+}
+
+VueClassMetadata.catchError = (e) => {
+  const window = BrowserWindow.getFocusedWindow()
+  if (window) {
+    window.webContents.send("error", e)
+  } else {
+    new Notification({ title: "Error", body: e.message }).show()
+  }
+  console.error(e)
 }
 
 // 加载所有已添加vue-class装饰器的类进容器

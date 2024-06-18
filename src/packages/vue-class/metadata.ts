@@ -49,6 +49,7 @@ export class VueClassMetadata {
   static ipcHandler: (channel: string, callback: Function) => void = () => void 0
   // 需要在渲染进程和主进程初始化. 在ipcMain或ipcRenderer上调用on监听事件
   static listenIpc: (channel: string, callback: Function) => Function = () => () => 0
+  static catchError?: (err: Error | any) => void
 
   isComponent = false
 
@@ -143,7 +144,14 @@ export class VueClassMetadata {
       let fn: Function
       if (typeof instance[handler.methodOrProp] === "function") fn = instance[handler.methodOrProp].bind(instance)
       else fn = () => instance[handler.methodOrProp]
-      VueClassMetadata.ipcHandler(handler.channel, fn)
+      VueClassMetadata.ipcHandler(handler.channel, (...args: any) => {
+        try {
+          fn(...args)
+        } catch (e) {
+          if (VueClassMetadata.catchError) VueClassMetadata.catchError(e)
+          else throw e
+        }
+      })
     }
   }
 
