@@ -33,6 +33,7 @@
       "@renderer/*": ["src/renderer/*"],
       "@main/*": ["src/main/*"],
       "@preload/*": ["src/preload/*"],
+      "@services/*": ["src/services/*"],
       "@packages/*": ["src/packages/*"]
     }
   }

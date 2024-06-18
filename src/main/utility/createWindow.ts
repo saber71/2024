@@ -6,7 +6,7 @@ import { join } from "path"
 import icon from "../../../resources/icon.png"
 
 export interface CreateWindowOptions extends BrowserWindowConstructorOptions {
-  html: "index" | "photo"
+  html: "index" | "photo" | "system-info"
   maximize?: boolean
 }
 
@@ -72,9 +72,9 @@ export function createWindow(options: CreateWindowOptions) {
 
     // 热模块替换(HMR)相关配置，根据环境加载远程URL或本地HTML文件。
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}${("/" + options.html).repeat(2)}.html`)
+      window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/${options.html}/index.html`)
     } else {
-      window.loadFile(join(__dirname, `../renderer/${options.html}/${options.html}.html`))
+      window.loadFile(join(__dirname, `../renderer/${options.html}/index.html`))
     }
   })
 }

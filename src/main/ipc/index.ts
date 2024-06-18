@@ -1,3 +1,4 @@
+import type { SystemInfoInvokeChannelMap } from "@main/ipc/system-info.ipc.ts"
 import type { FsInvokeChannelMap } from "./fs.ipc.ts"
 import type { PhotoInvokeChannelMap, PhotoTransferDataToRendererChannelMap } from "./photo.ipc.ts"
 import type { WindowInvokeChannelMap } from "./window.ipc.ts"
@@ -6,11 +7,16 @@ export * from "./fs.ipc"
 export * from "./photo.ipc"
 export * from "./ping.ipc"
 export * from "./window.ipc"
+export * from "./system-info.ipc"
 
 /**
  * 定义了一组channel映射，用于规范不同操作的参数和返回值。
  */
-export interface IpcInvokeChannelMap extends PhotoInvokeChannelMap, FsInvokeChannelMap, WindowInvokeChannelMap {
+export interface IpcInvokeChannelMap
+  extends PhotoInvokeChannelMap,
+    FsInvokeChannelMap,
+    WindowInvokeChannelMap,
+    SystemInfoInvokeChannelMap {
   ping: {
     args: ["123", 1]
     return: void

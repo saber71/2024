@@ -8,6 +8,7 @@ const alias = {
   "@renderer": resolve("src/renderer"),
   "@main": resolve("src/main"),
   "@preload": resolve("src/preload"),
+  "@services": resolve("src/services"),
   "@packages": resolve("src/packages")
 }
 
@@ -29,7 +30,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/renderer/index/index.html"),
-          photo: resolve(__dirname, "src/renderer/photo/photo.html")
+          photo: resolve(__dirname, "src/renderer/photo/index.html"),
+          "system-info": resolve(__dirname, "src/renderer/system-info/index.html")
         }
       }
     },

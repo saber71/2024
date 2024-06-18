@@ -37,6 +37,7 @@ export class WindowService {
     } else {
       // 如果不存在，创建一个新窗口
       const win = await createWindow(option)
+      this._map.set(html, win)
       mainEventBus.emit("onCreateWindow", html)
       // 在窗口关闭时，从映射中删除对应的条目
       win.on("closed", () => {

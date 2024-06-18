@@ -22,10 +22,6 @@ export class IndexInst extends VueComponent<IndexProps> {
     transferDataToMain("ping", 1)
   }
 
-  @BindThis() handleOpenPhoto() {
-    invoke("photo:open")
-  }
-
   @BindThis() handlePrint() {
     window.print()
   }
@@ -59,8 +55,11 @@ export class IndexInst extends VueComponent<IndexProps> {
             <a target="_blank" rel="noreferrer" onClick={this.handlePing}>
               ping主进程一下
             </a>
-            <a target="_blank" rel="noreferrer" onClick={this.handleOpenPhoto}>
-              打开照片
+            <a target="_blank" rel="noreferrer" onClick={() => invoke("photo:open")}>
+              open photo
+            </a>
+            <a target="_blank" rel="noreferrer" onClick={() => invoke("system-info:open")}>
+              open system-info
             </a>
           </div>
         </div>

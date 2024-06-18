@@ -5,6 +5,7 @@ import Index from "./photo.tsx"
 import "../global.css"
 import "ant-design-vue/dist/reset.css"
 import "overlayscrollbars/overlayscrollbars.css"
+import "../exposed.ts"
 
 const app = createApp(Index).use(router)
 await VueClass.install(app, router)

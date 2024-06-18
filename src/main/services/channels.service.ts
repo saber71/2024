@@ -1,27 +1,11 @@
 import { mainEventBus } from "@main/eventBus.ts"
 import { WindowService } from "@main/services/window.service.ts"
 import type { CreateWindowOptions } from "@main/utility"
-import type { Class } from "@packages/common"
 import { Inject } from "@packages/dependency-injection"
-import { Channel } from "@packages/sync"
+import { getWindowChannelsClass, WindowChannels } from "@packages/sync"
 import { CustomHandler, EventListener, Service, VueClass } from "@packages/vue-class"
 
 const LABEL_PREFIX = "$$window_channels$$:"
-
-/**
- * 用于映射窗口类型到其对应的Channel类。
- */
-const windowChannelsClassMap = new Map<CreateWindowOptions["html"], Class<WindowChannels>>()
-
-/**
- * 注册一个窗口Channel类。
- * @param type 窗口类型，用于唯一标识。
- */
-export function Channels(type: CreateWindowOptions["html"]) {
-  return (clazz: Class<WindowChannels>) => {
-    windowChannelsClassMap.set(type, clazz)
-  }
-}
 
 /**
  * 注入渠道信息到窗口配置中。
@@ -61,10 +45,13 @@ export class ChannelsService {
    * 这对于管理不同类型的窗口并根据需要进行操作是非常有用的。
    *
    * @param type 窗口的HTML类型，用于查找对应的窗口通道。
-   * @returns 返回与指定窗口类型关联的通道数组。如果没有找到匹配的类型，返回undefined。
+   * @throws 如果没有找到匹配的类型抛出错误
+   * @returns 返回与指定窗口类型关联的通道数组。
    */
-  getWindowChannels(type: CreateWindowOptions["html"]) {
-    return this._map.get(type)
+  getWindowChannels<T extends WindowChannels = WindowChannels>(type: CreateWindowOptions["html"]): T {
+    const result = this._map.get(type)
+    if (!result) throw new Error(type + ":window channels not found")
+    return result as T
   }
 
   /**
@@ -86,64 +73,17 @@ export class ChannelsService {
    */
   @EventListener(mainEventBus, "onCreateWindow") update(type: CreateWindowOptions["html"]) {
     let channels = this._map.get(type)
+    const window = this.windowService.getWindow(type)
     if (!channels) {
-      const clazz = windowChannelsClassMap.get(type)
-      const window = this.windowService.getWindow(type)
+      const clazz = getWindowChannelsClass(type)
       if (clazz && window) {
-        channels = new clazz(this.windowService, type, window.id)
+        channels = new clazz(type, window.id)
         this._map.set(type, channels)
         VueClass.getContainer().bindValue(LABEL_PREFIX + type, channels)
+        mainEventBus.emit("onCreateWindowChannels", type)
       }
     } else {
-      channels.updateWindowId()
+      if (window) channels.updateWindowId(window)
     }
-  }
-}
-
-/**
- * WindowChannels类，为特定窗口类型管理通信渠道。
- */
-export class WindowChannels {
-  disposeOnWindowClosed = false
-
-  /**
-   * 创建WindowChannels实例。
-   * @param windowService 窗口服务，用于获取窗口信息。
-   * @param windowType 窗口类型。
-   * @param _windowId 窗口ID。
-   */
-  constructor(
-    readonly windowService: WindowService,
-    readonly windowType: CreateWindowOptions["html"],
-    private _windowId: number
-  ) {
-    Channel.curDefaultWindowId = _windowId
-  }
-
-  /**
-   * 清理所有通信渠道。
-   */
-  dispose() {
-    this.getChannels().forEach((channel) => channel.dispose())
-  }
-
-  /**
-   * 更新窗口ID，当窗口ID发生变化时调用。
-   */
-  updateWindowId() {
-    const window = this.windowService.getWindow(this.windowType)
-    if (window && window.id !== this._windowId) {
-      this._windowId = window.id
-      this.getChannels().forEach((channel) => (channel.relateWindowId = window.id))
-    }
-    return this
-  }
-
-  /**
-   * 获取所有通信渠道。
-   * @returns 当前实例包含的所有通信渠道。
-   */
-  getChannels(): Channel<any>[] {
-    return Object.values(this).filter((val) => val instanceof Channel)
   }
 }

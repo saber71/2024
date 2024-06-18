@@ -97,6 +97,7 @@ export class Channel<Value> {
     this.eventNames.array.remove += name
     this.eventNames.object.set += name
     this.eventNames.object.delete += name
+    this.eventNames.object.assign += name
 
     /**
      * 监听getValue.request事件，当收到请求时，如果请求来源与当前窗口ID匹配，则响应请求并发送当前值。
@@ -104,7 +105,7 @@ export class Channel<Value> {
     Channel.on(this.eventNames.getValue.request, (data) => {
       if (data.windowId !== this.relateWindowId) return
       Channel.emit(this.eventNames.getValue.response, {
-        value: this.value,
+        value: JSON.parse(JSON.stringify(this.value)),
         windowId: data.windowId
       })
     })
@@ -165,6 +166,17 @@ export class Channel<Value> {
         delete (this.value as any)[key]
       }
     })
+
+    /**
+     * 监听对象赋值事件。
+     * 当接收到特定事件时，检查是否与当前关联的窗口ID匹配，如果匹配，则将接收到的值合并到当前对象中。
+     */
+    Channel.on(this.eventNames.object.assign, (data) => {
+      // 检查数据来源窗口ID是否与当前关联窗口ID匹配
+      if (data.windowId !== this.relateWindowId) return
+      // 将接收到的数据合并到当前对象中，以更新对象状态
+      Object.assign(this.value, data.value)
+    })
   }
 
   // 相关窗口的ID，用于标识数据来源。
@@ -195,7 +207,8 @@ export class Channel<Value> {
     },
     object: {
       set: "setObjectKeys:",
-      delete: "deleteObjectKeys"
+      delete: "deleteObjectKeys",
+      assign: "assignObject"
     }
   }
 
@@ -252,7 +265,7 @@ export class Channel<Value> {
    * 立即同步当前值到通道。
    */
   flush() {
-    Channel.emit(this.eventNames.sync, { value: this.value, windowId: this.relateWindowId })
+    Channel.emit(this.eventNames.sync, { value: JSON.parse(JSON.stringify(this.value)), windowId: this.relateWindowId })
   }
 
   /**
@@ -332,5 +345,14 @@ export class Channel<Value> {
       delete (this.value as any)[key]
     }
     Channel.emit(this.eventNames.object.delete, { value: items, windowId: this.relateWindowId })
+  }
+
+  /**
+   * 分配新属性到当前值对象，并触发相应的事件。
+   * @param value 部分新值，用于更新当前的值对象。这个参数应该是当前值的浅拷贝，并包含了需要更新的属性。
+   */
+  assign(value: Partial<Value>) {
+    Object.assign(this.value, value)
+    Channel.emit(this.eventNames.object.assign, { value, windowId: this.relateWindowId })
   }
 }
