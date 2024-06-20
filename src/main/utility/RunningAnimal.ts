@@ -1,4 +1,4 @@
-import { Collection } from "@packages/collection"
+import { StorageObject } from "@main/utility/StorageObject.ts"
 import type { FilterItem } from "@packages/filter"
 import { type NativeImage, nativeImage, Tray } from "electron"
 
@@ -27,12 +27,11 @@ export class RunningAnimal {
   }
 
   tray?: Tray // 托盘图标实例
-  readonly collection = new Collection<RunningAnimalOption>("running-animal") // 存储配置项的集合
-  private readonly _option: RunningAnimalOption = {
+  readonly option = new StorageObject<RunningAnimalOption>("running-animal", {
     runner: "cat",
     theme: "dark",
     _id: "running-animal"
-  } // 运行时配置
+  }) // 存储配置项的集合
   private _activeImages: Image[] = [] // 活跃的图片数组
   private _intervalTime = 100 // 图片切换间隔时间
   private _curImageIndex = 0 // 当前显示图片的索引
@@ -42,8 +41,7 @@ export class RunningAnimal {
    * 初始化函数，从集合中获取配置并应用。
    */
   async init() {
-    const option = await this.collection.getById(this._option._id)
-    if (option) Object.assign(this._option, option)
+    await this.option.initReady
     this.use()
   }
 
@@ -80,10 +78,9 @@ export class RunningAnimal {
    * @param type 运动员类型（如：cat）
    * @param theme 主题（如：light 或 dark）
    */
-  use(type: RunnerType = this._option.runner, theme: ThemeType = this._option.theme) {
-    this._option.runner = type
-    this._option.theme = theme
-    this.collection.save(this._option)
+  use(type: RunnerType = this.option.value.runner, theme: ThemeType = this.option.value.theme) {
+    this.option.value.runner = type
+    this.option.value.theme = theme
     this._activeImages = cache[type].filter((img) => img.path.indexOf(theme) >= 0)
     if (this._handler) {
       clearInterval(this._handler)
