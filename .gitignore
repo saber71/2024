@@ -6,3 +6,5 @@ out
 .idea
 pnpm-lock.yaml
 resources/python
+src/python/build
+src/python/dist
