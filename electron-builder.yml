@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: electron-app
+productName: electron-app-2024
 directories:
   buildResources: build
 files:
@@ -14,7 +14,7 @@ asarUnpack:
   - resources/**
   - node_modules/exiftool-vendored.*/**/*
 win:
-  executableName: electron-app
+  executableName: electron-app-2024
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
